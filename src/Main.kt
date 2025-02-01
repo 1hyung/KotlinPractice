@@ -5,7 +5,10 @@ fun main() {
     //TIP Press <shortcut actionId="ShowIntentionActions"/> with your caret at the highlighted text
     // to see how IntelliJ IDEA suggests fixing it.
     // 하이라이트된 텍스트에 커서(caret)를 두고 Alt + Enter를 누르면 IntelliJ IDEA가 수정 방법을 제안하는 것을 볼 수 있음.
-    println("Hello, " + name + "!")
+    println("Hello, " + name + "!") // 문자열 연결 방식, + 연산자를 사용하여 문자열을 결합하는 방식, Java 스타일의 코드
+
+    println("Hello, $name!") // 문자열 템플릿, $name을 그대로 문자열 안에 넣어 더 직관적으로 작성 가능
+    
     for (i in 1..5) {
         //TIP Press <shortcut actionId="Debug"/> to start debugging your code. We have set one <icon src="AllIcons.Debugger.Db_set_breakpoint"/> breakpoint
         // for you, but you can always add more by pressing <shortcut actionId="ToggleLineBreakpoint"/>.
