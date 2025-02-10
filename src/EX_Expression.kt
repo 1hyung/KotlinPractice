@@ -1,4 +1,4 @@
-fun main(args: Array<String>) {
+fun main() {
     // 이 표현식은 계산되지만 결과를 활용하지 않기 때문에 출력되지 않음
     4 + 29 - 50
 
