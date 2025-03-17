@@ -54,4 +54,15 @@ fun main() {
     // 계산 수행
     val result = calculator.calculate(num1, operator, num2)
     println("결과: $num1 $operator $num2 = $result")
+
+    // 에러 처리
+    if (result == null) {
+        if (operator == "/") {
+            println("0으로 나눌 수 없습니다. 프로그램을 종료합니다.")
+        } else {
+            println("절못된 연산자입니다. 프로그램을 종료합니다.")
+        }
+    } else {
+        println("결과: $num1 $operator $num2 = $result")
+    }
 }
