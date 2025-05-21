@@ -86,9 +86,17 @@ class Solution {
             .sum() // 약수 합산
 }*/
 
-// 나머지가 1이 되는 수 찾기
+/*// 나머지가 1이 되는 수 찾기
 class Solution {
     fun solution(n: Int): Int =
         (2 until n) // 2부터 n-1까지 범위 생성 (n 포함 x)
             .first { n % it == 1 }// 나머지 1이 되는 첫 번째 숫자를 찾고 반환
+}*/
+
+// x만큼 간격이 있는 n개의 숫자
+class Solution {
+    fun solution(x: Int, n: Int): LongArray =
+        (1..n) // 1부터 n까지 범위 생성
+            .map { x.toLong() * it } // 각 숫자에 it에 대해 x * it 값을 리스트에 저장
+            .toLongArray() // List<Long>을 LongArray로 변환
 }
