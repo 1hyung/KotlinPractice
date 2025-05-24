@@ -93,10 +93,19 @@ class Solution {
             .first { n % it == 1 }// 나머지 1이 되는 첫 번째 숫자를 찾고 반환
 }*/
 
-// x만큼 간격이 있는 n개의 숫자
+/*// x만큼 간격이 있는 n개의 숫자
 class Solution {
     fun solution(x: Int, n: Int): LongArray =
         (1..n) // 1부터 n까지 반복
             .map { x.toLong() * it } // 각 숫자에 x를 곱함 -> Long 타입으,로 변환하여 오버플로 방지
             .toLongArray() // List<Long>을 LongArray로 변환하여 반환
+}*/
+
+// 자연수를 뒤집어 배열로 만들기
+class Solution {
+    fun solution(n: Long): IntArray =
+        n.toString()             // 숫자를 문자열로 변환: 12345 → "12345"
+            .reversed()             // 문자열을 뒤집음: "54321"
+            .map { it.digitToInt() } // 각 문자(Char)를 정수로 변환: ['5','4','3','2','1'] → [5,4,3,2,1]
+            .toIntArray()           // 리스트를 IntArray로 변환
 }
