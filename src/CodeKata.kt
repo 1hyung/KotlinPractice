@@ -101,11 +101,20 @@ class Solution {
             .toLongArray() // List<Long>을 LongArray로 변환하여 반환
 }*/
 
-// 자연수를 뒤집어 배열로 만들기
+/*// 자연수를 뒤집어 배열로 만들기
 class Solution {
     fun solution(n: Long): IntArray =
         n.toString()             // 숫자를 문자열로 변환: 12345 → "12345"
             .reversed()             // 문자열을 뒤집음: "54321"
             .map { it.digitToInt() } // 각 문자(Char)를 정수로 변환: ['5','4','3','2','1'] → [5,4,3,2,1]
             .toIntArray()           // 리스트를 IntArray로 변환
+}*/
+
+// 자연수 뒤집어 배열로 만들기
+class Solution {
+    fun solution(n: Long): IntArray =
+        n.toString()  // 숫자를 문자열로 변환: 12345 → "12345"
+            .reversed()  // 문자열 뒤집기: 54321 → "54321"
+            .map { it.digitToInt() } // 각 문자(Char)를 정수로 변환: ['5','4','3','2','1'] → [5,4,3,2,1]
+            .toIntArray() // 리스트를 IntArray로 변환
 }
