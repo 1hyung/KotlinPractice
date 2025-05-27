@@ -110,11 +110,17 @@ class Solution {
             .toIntArray()           // 리스트를 IntArray로 변환
 }*/
 
-// 자연수 뒤집어 배열로 만들기
+/*// 자연수 뒤집어 배열로 만들기
 class Solution {
     fun solution(n: Long): IntArray =
         n.toString()  // 숫자를 문자열로 변환: 12345 → "12345"
             .reversed()  // 문자열 뒤집기: 54321 → "54321"
             .map { it.digitToInt() } // 각 문자(Char)를 정수로 변환: ['5','4','3','2','1'] → [5,4,3,2,1]
             .toIntArray() // 리스트를 IntArray로 변환
+}*/
+
+// 문자열을 정수로 바꾸기
+class Solution {
+    fun solution(s: String): Int =
+        s.toInt() // 문자열을 정수로 변환, 코틀린은 자동으로 부호까지 처리
 }
