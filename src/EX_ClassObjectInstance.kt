@@ -42,10 +42,22 @@ fun main() {
     cheolsu.name = "철수" // 철수 인스턴스의 이름을 "철수"로 설정
     cheolsu.age = 20 // 철수 인스턴스의 나이를 20으로 설정
 
+    cheolsu.apply {
+        this.name = "철수야"
+        this.age = 21
+        walk()
+    }
+
     // Person 클래스의 설계도를 바탕으로 '영희'라는 또 다른 인스턴스(객체)를 만듬
     val younghee: Person = Person() // 'younghee'라는 또 다른 Person 클래스의 인스턴스
     younghee.name = "영희" // 영희 인스턴스의 이름을 "영희"로 설정
     younghee.age = 22 // 영희 인스턴스의 나이를 22로 설정
+
+    younghee.apply {
+        this.name = "영희짱"
+        this.age = 22
+        walk()
+    }
 
     // 각 인스턴스(객체)의 동작을 실행
     cheolsu.walk()   // 출력: 철수이(가) 걷습니다.
