@@ -12,7 +12,7 @@ fun Int.isEven(): Boolean {
 
 fun List<String>.printAllWithPrefix(prefix: String) {
     // (1) 이 확장 함수가 호출된 List<String> 객체를 'this'로 접근합니다.
-    // 즉, main 함수에서 names.printAllWithPrefix(...)를 호출했다면,
+    // 즉, collectionFunctions.collectionFunctions.main 함수에서 names.printAllWithPrefix(...)를 호출했다면,
     // 여기서 'this'는 names 변수가 가리키는 listOf("Alice", "Bob", "Charlie") 리스트가 됩니다.
 
     // (2) 'this' (List<String> 객체)의 각 요소에 접근하기 위해 forEach 람다 함수를 사용합니다.

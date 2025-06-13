@@ -1,9 +1,9 @@
 fun main() {
     // fun은 function(함수)의 약자로, 해당 코드 블록이 함수(Function)임을 나타내는 키워드입니다.
     // main은 함수의 이름을 의미하며, 코틀린 프로그램의 시작점(entry point) 역할을 합니다.
-    // 모든 코틀린 프로그램은 main() 함수부터 실행됩니다.
+    // 모든 코틀린 프로그램은 collectionFunctions.collectionFunctions.main() 함수부터 실행됩니다.
 
-    // {} 중괄호는 main 함수의 시작과 끝을 나타내며, 중괄호 사이에 실행할 명령어를 작성합니다.
+    // {} 중괄호는 collectionFunctions.collectionFunctions.main 함수의 시작과 끝을 나타내며, 중괄호 사이에 실행할 명령어를 작성합니다.
 
     println("Hello, Kotlin!")
     // println은 화면에 텍스트를 출력하는 함수입니다.

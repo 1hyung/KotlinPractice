@@ -1,5 +1,5 @@
 fun main() {
-    // main 함수는 프로그램 실행의 시작점(entry point)입니다.
+    // collectionFunctions.collectionFunctions.main 함수는 프로그램 실행의 시작점(entry point)입니다.
 
     for (i in 1..5) {
         // 디버깅(Debugging)이란?
