@@ -1,0 +1,21 @@
+fun main() {
+    val number = listOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+
+    // 5보다 큰  숫자만 필터링해 리스트 생성
+    val overFive = number.filter { it > 5 }
+    println("5보다 큰 숫자 : $overFive")
+
+    // 5보다 작은 숫자만 필터링해 리스트 생성
+    val underFive = number.filter { num -> num < 5 }
+    println("5보다 작은 숫자 : $underFive")
+
+    // 문자열 리스트 길이가 3 이상인 단어만 필터링해서 리스트 생성
+    val fruits = listOf("Apple", "Banana", "Pear", "Grapes", "Pineapple")
+
+    val lengthOverThree = fruits.filter { word -> word.length > 3 }
+    println("길이가 3보다 긴 과일 이름 : $lengthOverThree")
+
+    // 홀수만 필터링해서 새로운 리스트 생성, 람다 함수의 파라미터 이름을 num으로 지정
+    val oddNumbers = number.filter { num -> num % 2 == 1 }
+    println("홀수 : $oddNumbers")
+}
