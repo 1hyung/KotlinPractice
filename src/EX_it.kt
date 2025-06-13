@@ -1,4 +1,19 @@
+data class Product(val name: String, val price: Int, val category: String)
+
 fun main() {
+
+    val products = listOf(
+        Product("노트북", 1200000, "전자제품"),
+        Product("티셔츠", 25000, "의류"),
+        Product("스마트폰", 800000, "전자제품"),
+        Product("청바지", 55000, "의류"),
+        Product("냉장고", 1500000, "가전제품"),
+    )
+
+    // rkrurdl 100만원 이상인 제품만 필터링
+    val expensiveProduct = products.filter { product -> product.price > 1000000 }
+    println(expensiveProduct)
+
     val number = listOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
 
     // 5보다 큰  숫자만 필터링해 리스트 생성
