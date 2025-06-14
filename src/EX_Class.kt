@@ -8,7 +8,7 @@
 이 Class에는 모든 사람이 공통적으로 가질 수 있는 속성(예: 이름, 나이, 키)과 동작(예: 걷다, 말하다, 먹다)을 정의해 놓는 것*/
 
 // '사람'이라는 클래스의 설계도
-class Person {
+class Person1 {
     // 속성 (Characteristics, What it has)
     var name: String = "이름없음" // 모든 사람은 이름을 가질 수 있습니다.
     var age: Int = 0    // 모든 사람은 나이를 가질 수 있습니다.
