@@ -1,4 +1,4 @@
-package collectionFunctions
+package moovStudy.collectionFunctions
 
 data class Friend1(val name: String, val school: String, val city: String)
 
@@ -21,5 +21,4 @@ fun main() {
 
     val lottoEvenOddNumbers = LottoNumbers.groupBy { number -> number % 2 == 0 }
     println("로또 번호 짝수/홀수 그룹화 : $lottoEvenOddNumbers")
-
 }
