@@ -1,3 +1,5 @@
+package moovStudy
+
 // String 클래스에 'printLength()'라는 새로운 확장 함수를 추가합니다.
 // 이 함수는 어떤 String 객체에서든 호출될 수 있습니다.
 fun String.printLength() {
@@ -58,10 +60,8 @@ fun main() {
 
     println("--- printAllWithPrefix 확장 함수 예제 시작 ---")
 
-
     val names1 = listOf("Alice", "Bob", "Charlie", "1hyung", "<UNK>")
     names1.printAllWithPrefix("Name: ")
-
 
     val names = listOf("Alice", "Bob", "Charlie") // String 객체들을 담은 List<String> 객체 생성
 
@@ -79,6 +79,4 @@ fun main() {
 
 
     println("--- 확장 함수 예제 종료 ---")
-
-
 }

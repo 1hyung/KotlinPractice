@@ -1,3 +1,5 @@
+package basic
+
 fun main() {
     println("Hello Kotlin#1") // 출력하고 한 칸 뜀
     print("Hello Kotlin#2") // 출력만
