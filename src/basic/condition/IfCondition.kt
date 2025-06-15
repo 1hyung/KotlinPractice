@@ -83,10 +83,4 @@ fun main() {
     } else {
         println("매우 나쁨")
     }
-
-    /**
-     * // when
-    if, else if, else문이 많아 질 경우 when을 사용하면 가독성을 향상 시킬 수 있음
-    enum class와 조합하여 사용하면 가독성 높고 안전한 코드를 작성할 수 있음*/
-
 }
