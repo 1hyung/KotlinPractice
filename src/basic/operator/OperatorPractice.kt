@@ -19,7 +19,7 @@ fun main() {
     // 1. 주어진 세 과목의 평균 출력하기
     val sum = mathScore + koreanScore + englishScore
     println(sum)
-    println(sum / 3).
+    println(sum / 3)
     val average1 = sum / 3
     println(average1)
     val average2 = (mathScore + koreanScore + englishScore) / 3
