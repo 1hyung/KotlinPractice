@@ -47,7 +47,7 @@ fun main() {
 
     // 두번째 숫자 입력
     print("num2: ")
-    val num2 = sc.nextDouble()
+    val num2 = readln().toDouble()
 
     // 계산
     val result = calculator.calculate(num1, operator, num2)
