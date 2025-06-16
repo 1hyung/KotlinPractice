@@ -1,4 +1,4 @@
-package collectionFunctions
+package moovStudy.collectionFunctions
 
 val numbers = listOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
 
@@ -36,13 +36,13 @@ fun main() {
 
     println("새로운 아이템 정보를 입력해주세요")
     print("아이템 이름: ")
-    val itemName = readLine() ?: "알 수 없음"
+    val itemName = readlnOrNull() ?: "알 수 없음"
 
     var itemPrice1 = 0
     var priceInputIsVaild = false
     while (!priceInputIsVaild) {
         print("가격 입력:")
-        val priceInput = readLine()
+        val priceInput = readlnOrNull()
 
         try {
             itemPrice1 = priceInput?.toInt() ?: 0
@@ -55,7 +55,7 @@ fun main() {
     var quantityInputIsVaild = false
     while (!quantityInputIsVaild) {
         print("수량 입력 : ")
-        val quantityInput = readLine()
+        val quantityInput = readlnOrNull()
         try {
             itemQuantity = quantityInput?.toInt() ?: 0
             quantityInputIsVaild = true

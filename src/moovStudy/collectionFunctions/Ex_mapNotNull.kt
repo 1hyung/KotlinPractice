@@ -1,4 +1,4 @@
-package collectionFunctions
+package moovStudy.collectionFunctions
 
 val nullableNumbers = listOf(1, 2, null, 4, 5, null)
 

@@ -24,14 +24,12 @@ class Calculator {
         }
     }
 
-    fun calculate(a: Double, operator: String, b: Double): Double? {
-        return when (operator) {
-            "+" -> add(a, b)
-            "-" -> subtract(a, b)
-            "*" -> multiply(a, b)
-            "/" -> divide(a, b)
-            else -> null
-        }
+    fun calculate(a: Double, operator: String, b: Double): Double? = when (operator) {
+        "+" -> add(a, b)
+        "-" -> subtract(a, b)
+        "*" -> multiply(a, b)
+        "/" -> divide(a, b)
+        else -> null
     }
 }
 

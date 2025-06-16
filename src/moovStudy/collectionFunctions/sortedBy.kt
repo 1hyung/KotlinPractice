@@ -1,4 +1,4 @@
-package collectionFunctions
+package moovStudy.collectionFunctions
 
 data class Friend(val name: String, val score: Int)
 

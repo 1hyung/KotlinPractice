@@ -1,4 +1,4 @@
-package collectionFunctions
+package moovStudy.collectionFunctions
 
 data class User(val id: Int, val name: String, val email: String)
 
@@ -15,9 +15,8 @@ fun main() {
     }
     println("사용자 이름 : $userNames")
 
-    val userEmail = users.map {user ->
+    val userEmail = users.map { user ->
         user.email
     }
     println("사용자 이메일 : $userEmail")
-
 }

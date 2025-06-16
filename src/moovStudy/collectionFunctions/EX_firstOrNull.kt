@@ -1,6 +1,6 @@
-package collectionFunctions
+package moovStudy.collectionFunctions
 
-data class Ord (val name: String, val type: String)
+data class Ord(val name: String, val type: String)
 
 val ords = listOf(
     Ord("루피", "물딜"),
@@ -8,7 +8,7 @@ val ords = listOf(
     Ord("나미", "마딜")
 )
 
-fun main () {
+fun main() {
     // 타입이 마딜인 캐릭을 찾음
     val firstMagicOrd = ords.firstOrNull { ord -> ord.type == "마딜" }
     println(firstMagicOrd?.name)
@@ -20,5 +20,4 @@ fun main () {
     ords.firstOrNull { it.type == "듀얼" }?.also { firstDualOrd ->
         println(firstDualOrd.name)
     }
-
 }

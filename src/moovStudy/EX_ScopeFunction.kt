@@ -1,3 +1,5 @@
+package moovStudy
+
 data class Person2(var name: String = "", var age: Int = 0)
 
 class Book(var name: String, var price: Int) {
@@ -14,7 +16,6 @@ fun main() {
         var a = Book("원형의 코틀린", 10000)
         a.name = "[초특가]" + a.name
         a.discount()*/
-
 
     var a = Book("원형의 코틀린", 10000).apply {
         name = "[초특가]" + name
@@ -53,5 +54,4 @@ fun main() {
     }
     // apply는 Person 객체 자신(person1)을 반환합니다.
     println("apply 블록 밖에서: $person1") // 출력: apply 블록 밖에서: Person(name=김철수, age=30)
-
 }
