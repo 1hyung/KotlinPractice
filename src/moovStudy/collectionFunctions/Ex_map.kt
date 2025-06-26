@@ -15,8 +15,12 @@ fun main() {
     }
     println("사용자 이름 : $userNames")
 
-    val userEmail = users.map { user ->
+    val userEmail1 = users.map { user ->
         user.email
     }
-    println("사용자 이메일 : $userEmail")
+    println("사용자 이메일 1 : $userEmail1")
+
+    val userEmail2 = users.map { it.email }
+    println("사용자 이메일 2 : $userEmail2")
+
 }
