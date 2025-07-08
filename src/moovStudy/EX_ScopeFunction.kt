@@ -24,24 +24,23 @@ fun main() {
     println(a)
 
     a.apply {
-        println("상품명 run: ${name}, 가격 run: ${price}원")
+        println("상품명 run: ${name}, 가격 apply: ${price}원") // 지역 변수 price (5000) 참조
     }
-
     a.run {
-        println("상품명 run: ${name}, 가격 run: ${price}원")
+        println("상품명 run: ${name}, 가격 run: ${price}원") // 지역 변수 price (5000) 참조
     }
 
     with(a) {
-        println("상품명 with: ${name}, 가격 with: ${price}")
+        println("상품명 with: ${name}, 가격 with: ${price}") // 지역 변수 price (5000) 참조
     }
 
 
     a.let {
-        println("상품명 let it: ${it.name}, 가격 let it: ${it.price}원 ")
+        println("상품명 let it: ${it.name}, 가격 let it: ${it.price}원 ") //  it.price (Book.price, 8000) 참조
     }
 
     a.let { myBook ->
-        println("상품명 let myBook: ${myBook.name}, 가격 let myBook: ${myBook.price}원 ")
+        println("상품명 let myBook: ${myBook.name}, 가격 let myBook: ${myBook.price}원 ") //  it.price (Book.price, 8000) 참조
     }
 
     // Person2 객체를 생성하고, apply 블록 안에서 속성을 설정합니다.
