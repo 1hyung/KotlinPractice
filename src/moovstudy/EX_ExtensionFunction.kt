@@ -1,4 +1,4 @@
-package moovStudy
+package moovstudy
 
 // String 클래스에 'printLength()'라는 새로운 확장 함수를 추가합니다.
 // 이 함수는 어떤 String 객체에서든 호출될 수 있습니다.

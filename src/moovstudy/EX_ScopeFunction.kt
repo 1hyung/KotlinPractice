@@ -1,4 +1,4 @@
-package moovStudy
+package moovstudy
 
 data class Person2(var name: String = "", var age: Int = 0)
 

@@ -1,4 +1,4 @@
-package moovStudy.collectionFunctions
+package moovstudy.collectionFunctions
 
 val stops = listOf("상무역", "마륵역", "운천역")
 

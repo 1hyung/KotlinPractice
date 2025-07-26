@@ -1,4 +1,4 @@
-package moovStudy.collectionFunctions
+package moovstudy.collectionFunctions
 
 data class Ord1(val name: String, val type: String)
 

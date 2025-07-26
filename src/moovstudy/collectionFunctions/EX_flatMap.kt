@@ -1,4 +1,4 @@
-package moovStudy.collectionFunctions
+package moovstudy.collectionFunctions
 
 data class Order(val id: Int, val productNames: List<String>)
 

@@ -1,4 +1,4 @@
-package moovStudy.collectionFunctions
+package moovstudy.collectionFunctions
 
 data class User(val id: Int, val name: String, val email: String)
 

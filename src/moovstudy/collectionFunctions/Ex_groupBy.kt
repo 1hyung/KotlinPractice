@@ -1,4 +1,4 @@
-package moovStudy.collectionFunctions
+package moovstudy.collectionFunctions
 
 data class Friend1(val name: String, val school: String, val city: String)
 

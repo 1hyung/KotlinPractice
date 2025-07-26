@@ -1,4 +1,4 @@
-package moovStudy
+package moovstudy
 
 import java.util.Scanner
 
