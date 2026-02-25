@@ -55,7 +55,7 @@ fun greet(name: String = "Guest") {
 }
 
 // 명명된 인자
-greet(name = "철수")
+greet(name = "1hyung")
 ```
 
 **연습 문제**:
