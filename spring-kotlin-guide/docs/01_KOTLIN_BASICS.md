@@ -29,7 +29,7 @@ var nonNull: String = "안녕"  // null 불가
 
 // nullable한 이메일 변수를 선언해보세요
 // var email: String? = null
-// email = "dev.1hyung@gmail.com"
+// email = "1hyung@gmail.com"
 ```
 
 ---
