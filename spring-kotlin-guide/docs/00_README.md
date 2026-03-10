@@ -115,7 +115,7 @@
 #### Day 6-7: 코드 리뷰 준비
 - 코드 컨벤션 학습
 - Pull Request 작성법
-- 테스트 코드 작성
+- 테스트 코드 작성 (**05_TESTING.md** 참고)
 
 ---
 
@@ -162,7 +162,8 @@ spring-kotlin-guide/
 │   ├── 01_KOTLIN_BASICS.md         # Kotlin 기초 문법
 │   ├── 02_SPRING_BASICS.md         # Spring Boot 기초
 │   ├── 03_PROJECT_STRUCTURE.md     # 프로젝트 구조 읽기 가이드
-│   └── 04_SYNTAX_REFERENCE.md      # 문법 레퍼런스
+│   ├── 04_SYNTAX_REFERENCE.md      # 문법 레퍼런스
+│   └── 05_TESTING.md               # 테스트 코드 작성 가이드
 ├── examples/                       # 문법 예제 코드
 │   └── *.kt
 └── practice/                       # 실습 프로젝트
@@ -208,6 +209,7 @@ spring-kotlin-guide/
 - [ ] Factory 패턴 이해
 - [ ] Redis 캐싱 동작 이해
 - [ ] 작은 기능 추가 성공
+- [ ] 테스트 코드 작성 (05_TESTING.md 학습 완료)
 - [ ] 코드 리뷰 받기
 
 ---

@@ -80,7 +80,7 @@ class Person(val name: String, var age: Int) {
     }
 }
 
-// 데이터 클래스 (DTO용, equals/hashCode/toString 자동 생성) -> equals/hashCode/toString 자동 생성 된다는 것이 무슨 말인지 모르겠음
+// 데이터 클래스 (DTO용): equals/hashCode/toString/copy() 메서드가 자동으로 생성됨
 data class User(
     val id: Long,
     val name: String,
@@ -97,6 +97,80 @@ val user = User(
 // copy() - 일부 필드만 변경한 복사본 생성
 val updatedUser = user.copy(email = "new@example.com")
 ```
+
+#### data class가 자동으로 만들어주는 것들
+
+`data class`를 선언하면 다음 4가지 메서드가 자동으로 생성됩니다. 직접 작성하지 않아도 됩니다.
+
+**① equals() - 값이 같은지 비교**
+
+```kotlin
+// 일반 클래스는 메모리 주소(객체의 위치)를 비교
+class PersonNormal(val name: String, val age: Int)
+val p1 = PersonNormal("홍길동", 25)
+val p2 = PersonNormal("홍길동", 25)
+println(p1 == p2)  // false! (같은 값이지만 다른 객체이므로)
+
+// data class는 필드 값을 비교
+data class PersonData(val name: String, val age: Int)
+val p3 = PersonData("홍길동", 25)
+val p4 = PersonData("홍길동", 25)
+println(p3 == p4)  // true! (name과 age 값이 같으므로)
+```
+
+→ API 응답 비교, 테스트 코드 작성 시 매우 중요합니다.
+
+**② hashCode() - Map/Set에서 빠른 검색**
+
+```kotlin
+data class User(val id: Long, val name: String)
+val user1 = User(1, "홍길동")
+val user2 = User(1, "홍길동")  // user1과 다른 객체지만 같은 값
+
+// Set에서 중복 제거
+val userSet = setOf(user1, user2)
+println(userSet.size)  // 1 (같은 값 = 중복으로 인식, 자동 제거!)
+
+// Map에서 키로 사용
+val map = mapOf(user1 to "서울시 강남구")
+println(map[user2])  // "서울시 강남구" (같은 값이라 찾을 수 있음!)
+```
+
+→ 일반 클래스였다면 `user1`과 `user2`는 다른 객체라 Map에서 찾을 수 없습니다.
+
+**③ toString() - 보기 좋은 출력**
+
+```kotlin
+class PersonNormal(val name: String, val age: Int)
+data class PersonData(val name: String, val age: Int)
+
+val normal = PersonNormal("홍길동", 25)
+val data = PersonData("홍길동", 25)
+
+println(normal)  // com.example.PersonNormal@7852e922 (메모리 주소, 알아보기 불편)
+println(data)    // PersonData(name=홍길동, age=25) (필드값이 그대로 보임!)
+```
+
+→ 로그 출력이나 디버깅 시 `println()`만 해도 어떤 값인지 바로 확인할 수 있습니다.
+
+**④ copy() - 일부 값만 바꾼 새 객체 생성**
+
+```kotlin
+data class User(val id: Long, val name: String, val email: String)
+val user = User(1, "홍길동", "hong@gmail.com")
+
+// 이메일만 바꾼 새 객체 생성
+val updated = user.copy(email = "newemail@gmail.com")
+println(user)    // User(id=1, name=홍길동, email=hong@gmail.com) - 원본 그대로!
+println(updated) // User(id=1, name=홍길동, email=newemail@gmail.com) - 이메일만 변경
+
+// 여러 필드 동시 변경도 가능
+val renamed = user.copy(name = "김철수", email = "kim@gmail.com")
+```
+
+→ `val`로 선언한 불변 객체를 업데이트할 때 사용합니다. 원본은 변경하지 않습니다.
+
+> **요약**: `data class` = 값을 담기 위한 클래스. `equals`, `hashCode`, `toString`, `copy`가 자동 생성되어 편리합니다.
 
 **연습 문제**:
 ```kotlin
@@ -735,6 +809,123 @@ val filtered = list.filter { it.age > 18 }
 
 ---
 
+---
+
+### 12. interface (인터페이스)
+
+인터페이스는 클래스가 반드시 구현해야 할 **행동을 정의**합니다. Spring 프로젝트에서 매우 자주 사용됩니다.
+
+#### 기본 사용법
+
+```kotlin
+// 인터페이스 정의 (무엇을 해야 하는지만 정의, 어떻게는 구현체가 결정)
+interface Animal {
+    val name: String                    // 반드시 구현해야 함
+    fun speak(): String                 // 반드시 구현해야 함
+    fun breathe(): String = "숨쉬기..."  // 기본 구현 제공 (선택적으로 오버라이드)
+}
+
+// 구현 클래스
+class Dog(override val name: String) : Animal {
+    override fun speak(): String = "$name: 멍멍!"
+}
+
+class Cat(override val name: String) : Animal {
+    override fun speak(): String = "$name: 야옹~"
+    override fun breathe(): String = "고요하게 숨쉬기..."  // 기본 구현 덮어씀
+}
+
+// 사용
+val animals: List<Animal> = listOf(Dog("바둑이"), Cat("나비"), Dog("초코"))
+animals.forEach { println(it.speak()) }
+// 바둑이: 멍멍!
+// 나비: 야옹~
+// 초코: 멍멍!
+```
+
+#### Spring에서 interface를 왜 쓸까?
+
+Spring 프로젝트에서는 Service를 항상 interface + 구현체로 분리합니다.
+
+```kotlin
+// 1. 인터페이스: "OrderService는 이런 기능을 가져야 한다"는 약속
+interface OrderService {
+    suspend fun createOrder(dto: OrderDTO): OrderDTO
+    suspend fun findById(id: Long): OrderDTO
+    suspend fun cancelOrder(id: Long): OrderDTO
+}
+
+// 2. 구현체: 실제 비즈니스 로직 작성
+@Service
+class OrderServiceImpl(
+    private val repository: OrderRepository
+) : OrderService {
+
+    override suspend fun createOrder(dto: OrderDTO): OrderDTO {
+        // 실제 구현
+        return repository.save(dto)
+    }
+
+    override suspend fun findById(id: Long): OrderDTO {
+        return repository.findById(id)
+            ?: throw IllegalArgumentException("주문을 찾을 수 없습니다: $id")
+    }
+
+    override suspend fun cancelOrder(id: Long): OrderDTO {
+        val order = findById(id)
+        return repository.save(order.copy(status = "CANCELLED"))
+    }
+}
+
+// 3. Controller는 인터페이스 타입으로 주입받음 (구현체가 아닌!)
+@RestController
+class OrderController(
+    private val orderService: OrderService  // 구현체가 아닌 인터페이스!
+) {
+    @PostMapping("/api/orders")
+    suspend fun createOrder(@RequestBody dto: OrderDTO): OrderDTO {
+        return orderService.createOrder(dto)
+    }
+}
+```
+
+**왜 인터페이스를 쓰는가?**
+
+| 상황 | 일반 클래스만 쓸 때 | 인터페이스 쓸 때 |
+|------|---------------------|-----------------|
+| 테스트 | 실제 DB 연결 필요 | 가짜(Mock) 객체로 교체 가능 |
+| 구현 변경 | 모든 사용처 수정 | 구현체만 바꾸면 됨 |
+| 협업 | 구현 완성 전 사용 불가 | 인터페이스만 있으면 사용 가능 |
+
+```kotlin
+// 테스트 시 가짜 구현체 사용 예시
+class FakeOrderService : OrderService {
+    override suspend fun createOrder(dto: OrderDTO): OrderDTO {
+        return dto.copy(id = 999L)  // DB 없이 가짜 응답
+    }
+
+    override suspend fun findById(id: Long): OrderDTO {
+        return OrderDTO(id = id, status = "PENDING")  // 가짜 데이터 반환
+    }
+
+    override suspend fun cancelOrder(id: Long): OrderDTO {
+        return OrderDTO(id = id, status = "CANCELLED")
+    }
+}
+
+// 테스트에서
+val controller = OrderController(FakeOrderService())  // 가짜 서비스 주입
+```
+
+#### 인터페이스 체크리스트
+
+- [ ] `interface` 키워드로 정의한다
+- [ ] 구현 클래스는 `: InterfaceName`으로 구현한다
+- [ ] 메서드 앞에 `override` 키워드를 붙인다
+- [ ] Spring Service는 인터페이스 + 구현체로 분리한다
+
+---
+
 ## 실습 프로젝트: 간단한 도서 관리 시스템
 
 위에서 배운 내용을 종합해서 만들어봅시다.
@@ -824,6 +1015,7 @@ fun main() {
 - [ ] sealed class
 - [ ] companion object
 - [ ] 고차 함수와 람다
+- [ ] interface 패턴 이해
 - [ ] 실습 프로젝트 완성
 
 ---

@@ -368,6 +368,141 @@ class CurrentUserArgumentResolver : HandlerMethodArgumentResolver {
 
 ---
 
+---
+
+## 로깅 패턴
+
+### 로거 설정
+
+```kotlin
+import org.slf4j.LoggerFactory
+
+@Service
+class OrderServiceImpl(
+    private val orderRepository: OrderRepository
+) : OrderService {
+
+    // 1. companion object 방식 (클래스 밖에서도 사용 가능)
+    companion object {
+        private val logger = LoggerFactory.getLogger(OrderServiceImpl::class.java)
+    }
+
+    // 2. 또는 lazy 방식
+    private val log = LoggerFactory.getLogger(this::class.java)
+
+    override suspend fun createOrder(dto: OrderDTO): OrderDTO {
+        logger.info("[Order] 주문 생성 시작: customerId=${dto.customerId}")
+
+        val saved = orderRepository.save(dto)
+
+        logger.info("[Order] 주문 생성 완료: orderId=${saved.id}")
+        return saved
+    }
+}
+```
+
+### 로그 레벨 사용법
+
+```kotlin
+class SomeService {
+    private val logger = LoggerFactory.getLogger(this::class.java)
+
+    fun process(data: DataDTO) {
+        logger.debug("상세 디버그 정보: $data")       // 개발 시 디버깅용
+        logger.info("주요 흐름 기록: id=${data.id}")   // 일반적인 처리 흐름
+        logger.warn("주의가 필요한 상황 발생")         // 문제는 아니지만 주의 필요
+        logger.error("오류 발생!", exception)         // 에러 (서버 알림 대상)
+    }
+}
+```
+
+| 레벨 | 용도 | 운영 환경 출력 여부 |
+|------|------|-------------------|
+| DEBUG | 개발 중 상세 정보 | 보통 OFF |
+| INFO | 주요 처리 흐름 | ON |
+| WARN | 주의 상황 | ON |
+| ERROR | 오류 발생 | ON (알림 발송) |
+
+### 실전 로깅 패턴
+
+```kotlin
+@Service
+class ItemServiceImpl(
+    private val itemRepository: ItemRepository,
+    private val kafkaService: KafkaService
+) : ItemService {
+    companion object {
+        private val logger = LoggerFactory.getLogger(ItemServiceImpl::class.java)
+    }
+
+    override suspend fun save(item: ItemDTO): ItemDTO {
+        logger.info("[Item][save] 시작 - name=${item.name}, category=${item.categoryId}")
+
+        return try {
+            val saved = itemRepository.save(item)
+            logger.info("[Item][save] 완료 - id=${saved.id}")
+            saved
+        } catch (e: Exception) {
+            logger.error("[Item][save] 실패 - item=$item", e)
+            throw e
+        }
+    }
+
+    override suspend fun list(request: SearchRequest): List<ItemDTO> {
+        logger.debug("[Item][list] 검색 조건: $request")
+
+        val result = itemRepository.findList(request)
+
+        logger.info("[Item][list] 검색 완료 - 결과 수: ${result.size}")
+        return result
+    }
+}
+```
+
+> **팁**: 로그에 `[도메인][기능]` 형식으로 태그를 붙이면 나중에 검색하기 쉽습니다.
+
+---
+
+## @Transactional 실전 패턴
+
+### 여러 Repository가 연관된 경우
+
+```kotlin
+@Service
+class OrderServiceImpl(
+    private val orderRepository: OrderRepository,
+    private val stockRepository: StockRepository,
+    private val notificationService: NotificationService
+) : OrderService {
+
+    // 여러 Repository 작업을 하나의 트랜잭션으로 묶기
+    @Transactional
+    override suspend fun createOrder(dto: OrderDTO): OrderDTO {
+        // 1. 재고 확인
+        val stock = stockRepository.findByProductId(dto.productId)
+            ?: throw NotFoundException("상품을 찾을 수 없습니다")
+
+        if (stock.quantity < dto.quantity) {
+            throw ValidationException("재고가 부족합니다 (현재: ${stock.quantity})")
+        }
+
+        // 2. 주문 저장
+        val order = orderRepository.save(dto)
+
+        // 3. 재고 감소
+        stockRepository.save(stock.copy(quantity = stock.quantity - dto.quantity))
+
+        // 4. 알림 전송 (트랜잭션 범위 밖에서 처리하는 것이 좋음)
+        notificationService.sendOrderCreated(order)
+
+        return order
+        // 여기까지 오류 없으면 커밋, 어디서든 오류 나면 전부 롤백
+    }
+}
+```
+
+---
+
 ## 학습 체크리스트
 
 ### Week 1: 기본 구조

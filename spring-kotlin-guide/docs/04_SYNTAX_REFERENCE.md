@@ -14,10 +14,12 @@
 6. [컬렉션 처리 함수](#6-컬렉션-처리-함수)
 7. [코루틴 (Coroutines)](#7-코루틴-coroutines)
 8. [When 표현식](#8-when-표현식)
-9. [Companion Object](#9-companion-object)
-10. [프로퍼티 위임 (Property Delegation)](#10-프로퍼티-위임-property-delegation)
-11. [제네릭 (Generics)](#11-제네릭-generics)
-12. [Enum 클래스](#12-enum-클래스)
+9. [Sealed Class](#9-sealed-class)
+10. [Companion Object](#10-companion-object)
+11. [프로퍼티 위임 (Property Delegation)](#11-프로퍼티-위임-property-delegation)
+12. [제네릭 (Generics)](#12-제네릭-generics)
+13. [Enum 클래스](#13-enum-클래스)
+14. [Interface (인터페이스)](#14-interface-인터페이스)
 
 ---
 
@@ -974,12 +976,132 @@ val result = when (status) {
 
 ---
 
-## 9. Companion Object
+## 9. Sealed Class
+
+### 개념
+`sealed class`는 제한된 클래스 계층을 표현합니다. `when` 표현식과 함께 사용할 때 모든 경우를 컴파일러가 강제로 확인합니다.
+
+**일반 클래스와의 차이:**
+```kotlin
+// 일반 when - else 필요
+fun handleStatus(status: String): String {
+    return when (status) {
+        "SUCCESS" -> "성공"
+        "ERROR" -> "오류"
+        else -> "???"  // else 필수 (다른 문자열이 올 수 있으니까)
+    }
+}
+
+// sealed class - 모든 경우 컴파일러가 체크
+sealed class OrderStatus {
+    object Pending : OrderStatus()     // 대기중
+    object Processing : OrderStatus() // 처리중
+    data class Success(val orderId: Long) : OrderStatus()  // 성공
+    data class Failed(val reason: String) : OrderStatus()  // 실패
+}
+
+fun handleStatus(status: OrderStatus): String {
+    return when (status) {
+        is OrderStatus.Pending -> "주문 대기중"
+        is OrderStatus.Processing -> "처리중"
+        is OrderStatus.Success -> "주문 완료: ${status.orderId}"  // orderId 접근 가능!
+        is OrderStatus.Failed -> "주문 실패: ${status.reason}"    // reason 접근 가능!
+        // else 불필요! 컴파일러가 모든 경우를 체크
+    }
+}
+```
+
+### 실전 예시: API 결과 처리
+
+```kotlin
+// API 호출 결과를 sealed class로 표현
+sealed class ApiResult<out T> {
+    data class Success<T>(val data: T) : ApiResult<T>()
+    data class Error(val code: String, val message: String) : ApiResult<Nothing>()
+    object Loading : ApiResult<Nothing>()
+}
+
+// 사용
+suspend fun fetchOrder(id: Long): ApiResult<OrderDTO> {
+    return try {
+        val order = orderRepository.findById(id)
+            ?: return ApiResult.Error("NOT_FOUND", "주문을 찾을 수 없습니다")
+        ApiResult.Success(order)
+    } catch (e: Exception) {
+        ApiResult.Error("SERVER_ERROR", e.message ?: "서버 오류")
+    }
+}
+
+// 결과 처리
+suspend fun processResult() {
+    when (val result = fetchOrder(1L)) {
+        is ApiResult.Success -> {
+            println("성공: ${result.data}")
+        }
+        is ApiResult.Error -> {
+            println("오류 [${result.code}]: ${result.message}")
+        }
+        ApiResult.Loading -> {
+            println("로딩 중...")
+        }
+    }
+}
+```
+
+### sealed class vs enum 비교
+
+```kotlin
+// enum: 각 케이스가 동일한 구조
+enum class Status { PENDING, SUCCESS, FAILED }
+
+// sealed class: 각 케이스가 다른 데이터를 가질 수 있음
+sealed class Result {
+    object Pending : Result()
+    data class Success(val data: String) : Result()  // data 포함
+    data class Failed(val code: Int, val msg: String) : Result()  // 여러 필드
+}
+```
+
+| 특성 | enum | sealed class |
+|------|------|--------------|
+| 각 케이스 데이터 | 동일한 구조 | 다른 구조 가능 |
+| 추가 메서드 | 가능 | 가능 |
+| when 완전성 체크 | O | O |
+| 상속 | 불가 | 가능 |
+
+### 언제 sealed class를 쓸까?
+
+```kotlin
+// 1. 네트워크 상태
+sealed class NetworkState {
+    object Connected : NetworkState()
+    object Disconnected : NetworkState()
+    data class Error(val exception: Exception) : NetworkState()
+}
+
+// 2. UI 상태
+sealed class UiState<out T> {
+    object Loading : UiState<Nothing>()
+    data class Success<T>(val data: T) : UiState<T>()
+    data class Error(val message: String) : UiState<Nothing>()
+}
+
+// 3. 이벤트 처리
+sealed class OrderEvent {
+    data class Created(val orderId: Long, val customerId: Long) : OrderEvent()
+    data class Shipped(val orderId: Long, val trackingNumber: String) : OrderEvent()
+    data class Cancelled(val orderId: Long, val reason: String) : OrderEvent()
+}
+```
+
+---
+
+## 10. Companion Object
 
 ### 개념
 클래스의 인스턴스 없이 사용할 수 있는 멤버를 정의합니다. Java의 `static`과 유사하지만 더 강력합니다.
 
-### 9.1 정적 변수 및 메서드
+### 10.1 정적 변수 및 메서드
 
 ```kotlin
 @Service
@@ -1011,7 +1133,7 @@ class SearchServiceImpl(...) : SearchService {
 SearchServiceImpl.CURRENCY_MAP
 ```
 
-### 9.2 팩토리 메서드
+### 10.2 팩토리 메서드
 
 ```kotlin
 @Configuration
@@ -1046,7 +1168,7 @@ class RedisConfig {
 val template = RedisConfig.template(factory, ProductView::class.java)
 ```
 
-### 9.3 실전 예시
+### 10.3 실전 예시
 
 ```kotlin
 class User(val name: String, val age: Int) {
@@ -1074,7 +1196,7 @@ val user = User.create("John", 25)
 if (User.isValidAge(30)) { ... }
 ```
 
-### 9.4 companion object vs object
+### 10.4 companion object vs object
 
 ```kotlin
 // 1. companion object (클래스와 연관)
@@ -1101,12 +1223,12 @@ val listener = object : ClickListener {
 
 ---
 
-## 10. 프로퍼티 위임 (Property Delegation)
+## 11. 프로퍼티 위임 (Property Delegation)
 
 ### 개념
 프로퍼티의 getter/setter 로직을 다른 객체에 위임합니다. `by` 키워드를 사용합니다.
 
-### 10.1 by lazy - 지연 초기화
+### 11.1 by lazy - 지연 초기화
 
 **의미**: 처음 사용될 때까지 초기화를 지연
 
@@ -1136,7 +1258,7 @@ class DatabaseConnection {
 }
 ```
 
-### 10.2 언제 사용할까?
+### 11.2 언제 사용할까?
 
 ```kotlin
 class ExpensiveResource {
@@ -1157,7 +1279,7 @@ class ExpensiveResource {
 }
 ```
 
-### 10.3 lateinit vs lazy
+### 11.3 lateinit vs lazy
 
 ```kotlin
 class Example {
@@ -1175,7 +1297,7 @@ class Example {
 }
 ```
 
-### 10.4 커스텀 위임 (고급)
+### 11.4 커스텀 위임 (고급)
 
 ```kotlin
 import kotlin.properties.ReadWriteProperty
@@ -1205,12 +1327,12 @@ println(user.name)  // "Getting name = John" 출력
 
 ---
 
-## 11. 제네릭 (Generics)
+## 12. 제네릭 (Generics)
 
 ### 개념
 타입을 파라미터로 받아 재사용 가능한 코드를 작성합니다. 타입 안정성을 유지하면서 코드 중복을 줄입니다.
 
-### 11.1 제네릭 함수
+### 12.1 제네릭 함수
 
 ```kotlin
 companion object {
@@ -1237,7 +1359,7 @@ val stringTemplate = RedisConfig.template(factory, String::class.java)
 val productTemplate = RedisConfig.template(factory, ProductView::class.java)
 ```
 
-### 11.2 Reified Type Parameter - 타입 정보 보존
+### 12.2 Reified Type Parameter - 타입 정보 보존
 
 **문제**: 일반 제네릭은 런타임에 타입 정보가 지워집니다 (Type Erasure)
 
@@ -1270,7 +1392,7 @@ val userTemplate = redisTemplate<User>(connection)
 val productTemplate = redisTemplate<Product>(connection)
 ```
 
-### 11.3 제네릭 클래스
+### 12.3 제네릭 클래스
 
 ```kotlin
 // 간단한 박스 클래스
@@ -1287,7 +1409,7 @@ println(intBox.getItem())     // 123
 println(stringBox.getItem())  // "Hello"
 ```
 
-### 11.4 타입 제약
+### 12.4 타입 제약
 
 ```kotlin
 // T는 Number의 하위 타입이어야 함
@@ -1300,7 +1422,7 @@ sum(1.5, 2.3)   // OK
 sum("a", "b")   // 컴파일 에러!
 ```
 
-### 11.5 변성 (Variance)
+### 12.5 변성 (Variance)
 
 ```kotlin
 // 1. 공변 (out) - 생산자
@@ -1333,12 +1455,12 @@ val mutableObjects: MutableList<Any> = mutableStrings  // 컴파일 에러!
 
 ---
 
-## 12. Enum 클래스
+## 13. Enum 클래스
 
 ### 개념
 고정된 상수 집합을 타입 안전하게 표현합니다. 상태, 타입, 옵션 등을 정의할 때 사용합니다.
 
-### 12.1 기본 Enum
+### 13.1 기본 Enum
 
 ```kotlin
 enum class ProductCategory(val type: String) {
@@ -1361,7 +1483,7 @@ ProductCategory.values().forEach {
 }
 ```
 
-### 12.2 복합 Enum (여러 프로퍼티)
+### 13.2 복합 Enum (여러 프로퍼티)
 
 ```kotlin
 enum class OrderStatus(val status: String) {
@@ -1373,7 +1495,7 @@ enum class OrderStatus(val status: String) {
 }
 ```
 
-### 12.3 Enum with 메서드
+### 13.3 Enum with 메서드
 
 ```kotlin
 enum class PaymentMethod(val displayName: String, val fee: Double) {
@@ -1403,7 +1525,7 @@ println(method.displayName)  // "신용카드"
 println(method.calculateFee(10000.0))  // 300.0
 ```
 
-### 12.4 Enum과 when 표현식
+### 13.4 Enum과 when 표현식
 
 ```kotlin
 fun processPayment(method: PaymentMethod, amount: Double): String {
@@ -1416,7 +1538,7 @@ fun processPayment(method: PaymentMethod, amount: Double): String {
 }
 ```
 
-### 12.5 실전 패턴
+### 13.5 실전 패턴
 
 ```kotlin
 // 1. HTTP 상태 코드
@@ -1449,6 +1571,154 @@ if (currentUser.hasPermission(Role.USER)) {
     println("접근 허용")
 }
 ```
+
+---
+
+## 14. Interface (인터페이스)
+
+### 개념
+클래스가 반드시 구현해야 할 동작을 정의합니다. 구현 세부사항은 없고 "무엇을 해야 하는가"만 정의합니다.
+
+### 기본 사용법
+
+```kotlin
+// 인터페이스 정의
+interface Printable {
+    fun print()                           // 추상 메서드 (구현 필수)
+    fun preview(): String = "미리보기..."  // 기본 구현 (오버라이드 선택)
+}
+
+// 구현
+class Document(val title: String) : Printable {
+    override fun print() {
+        println("문서 출력: $title")
+    }
+}
+
+class Image(val filename: String) : Printable {
+    override fun print() {
+        println("이미지 출력: $filename")
+    }
+
+    override fun preview(): String = "이미지 미리보기: $filename"  // 오버라이드
+}
+
+// 사용
+val items: List<Printable> = listOf(Document("보고서"), Image("photo.jpg"))
+items.forEach { it.print() }
+```
+
+### 다중 인터페이스 구현
+
+```kotlin
+interface Saveable {
+    suspend fun save(): Boolean
+}
+
+interface Deletable {
+    suspend fun delete(id: Long): Boolean
+}
+
+// 여러 인터페이스 동시 구현
+interface UserRepository : Saveable, Deletable {
+    suspend fun findById(id: Long): UserDTO?
+    suspend fun findAll(): List<UserDTO>
+}
+
+// 구현체
+@Repository
+class UserRepositoryImpl(
+    private val db: R2dbcDatabase
+) : UserRepository {
+    override suspend fun save(): Boolean { TODO() }
+    override suspend fun delete(id: Long): Boolean { TODO() }
+    override suspend fun findById(id: Long): UserDTO? { TODO() }
+    override suspend fun findAll(): List<UserDTO> { TODO() }
+}
+```
+
+### Spring에서의 Interface 패턴
+
+```kotlin
+// Service 인터페이스
+interface UserService {
+    suspend fun createUser(request: CreateUserRequest): UserDTO
+    suspend fun findById(id: Long): UserDTO
+    suspend fun updateUser(id: Long, request: UpdateUserRequest): UserDTO
+    suspend fun deleteUser(id: Long)
+    suspend fun findAll(pageable: Pageable): Page<UserDTO>
+}
+
+// 구현체 (비즈니스 로직)
+@Service
+class UserServiceImpl(
+    private val userRepository: UserRepository,
+    private val emailService: EmailService
+) : UserService {
+
+    override suspend fun createUser(request: CreateUserRequest): UserDTO {
+        // 중복 이메일 체크
+        userRepository.findByEmail(request.email)?.let {
+            throw ValidationException("이미 사용 중인 이메일입니다: ${request.email}")
+        }
+
+        val user = UserDTO(
+            name = request.name,
+            email = request.email
+        )
+        val saved = userRepository.save(user)
+
+        // 환영 이메일 전송
+        emailService.sendWelcome(saved.email)
+
+        return saved
+    }
+
+    override suspend fun findById(id: Long): UserDTO {
+        return userRepository.findById(id)
+            ?: throw NotFoundException("사용자를 찾을 수 없습니다: $id")
+    }
+
+    // ... 나머지 구현
+}
+```
+
+### 인터페이스 vs 추상 클래스
+
+```kotlin
+// 인터페이스: 행동 계약 (상태 없음, 다중 구현 가능)
+interface Flyable {
+    fun fly(): String
+}
+
+interface Swimmable {
+    fun swim(): String
+}
+
+// 추상 클래스: 공통 구현 제공 (상태 있음, 단일 상속)
+abstract class Bird(val name: String) {
+    abstract fun makeSound(): String  // 구현 강제
+
+    fun breathe(): String = "$name 숨쉬기"  // 공통 구현 제공
+}
+
+// 추상 클래스 상속 + 인터페이스 구현 동시에 가능
+class Duck(name: String) : Bird(name), Flyable, Swimmable {
+    override fun makeSound(): String = "꽥꽥"
+    override fun fly(): String = "$name 날기"
+    override fun swim(): String = "$name 수영"
+}
+```
+
+| 특성 | Interface | Abstract Class |
+|------|-----------|---------------|
+| 상태(필드) | 불가 | 가능 |
+| 다중 구현 | 가능 | 불가 (단일 상속) |
+| 생성자 | 없음 | 있음 |
+| 기본 구현 | 가능 | 가능 |
+| 용도 | 행동 계약 | 공통 구현 공유 |
+
+> **Spring에서는 대부분 Interface를 사용합니다.** 상태를 가지지 않고, 행동(메서드)만 정의하기 때문입니다.
 
 ---
 
