@@ -9,7 +9,7 @@ Kotlin 기본 문법을 학습합니다.
 ### 1. 변수 선언
 ```kotlin
 // val: 불변 (Java의 final)
-val name: String = "홍길동"
+val name: String = "1hyung"
 val age = 25  // 타입 추론
 
 // var: 가변
