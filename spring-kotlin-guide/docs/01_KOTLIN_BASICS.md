@@ -29,7 +29,7 @@ var nonNull: String = "안녕"  // null 불가
 
 // nullable한 이메일 변수를 선언해보세요
 // var email: String? = null
-// email = "1hyung@gmail.com"
+// email = "1hyung@example.com"
 ```
 
 ---
@@ -90,8 +90,8 @@ data class User(
 // 사용 예시
 val user = User(
     id = 1,
-    name = "김철수",
-    email = "kim@example.com"
+    name = "1hyung",
+    email = "1hyung@example.com"
 )
 
 // copy() - 일부 필드만 변경한 복사본 생성
