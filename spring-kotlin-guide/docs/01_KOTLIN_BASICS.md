@@ -107,8 +107,8 @@ val updatedUser = user.copy(email = "new@example.com")
 ```kotlin
 // 일반 클래스는 메모리 주소(객체의 위치)를 비교
 class PersonNormal(val name: String, val age: Int)
-val p1 = PersonNormal("홍길동", 25)
-val p2 = PersonNormal("홍길동", 25)
+val p1 = PersonNormal("1hyung", 25)
+val p2 = PersonNormal("wonhyung", 25)
 println(p1 == p2)  // false! (같은 값이지만 다른 객체이므로)
 
 // data class는 필드 값을 비교
