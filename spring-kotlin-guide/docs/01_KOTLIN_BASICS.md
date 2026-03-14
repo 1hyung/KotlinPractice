@@ -124,8 +124,8 @@ println(p3 == p4)  // true! (name과 age 값이 같으므로)
 
 ```kotlin
 data class User(val id: Long, val name: String)
-val user1 = User(1, "홍길동")
-val user2 = User(1, "홍길동")  // user1과 다른 객체지만 같은 값
+val user1 = User(1, "1hyung")
+val user2 = User(1, "1hyung")  // user1과 다른 객체지만 같은 값
 
 // Set에서 중복 제거
 val userSet = setOf(user1, user2)
