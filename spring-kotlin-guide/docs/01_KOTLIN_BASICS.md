@@ -144,8 +144,8 @@ println(map[user2])  // "서울시 강남구" (같은 값이라 찾을 수 있�
 class PersonNormal(val name: String, val age: Int)
 data class PersonData(val name: String, val age: Int)
 
-val normal = PersonNormal("홍길동", 25)
-val data = PersonData("홍길동", 25)
+val normal = PersonNormal("1hyung", 25)
+val data = PersonData("1hyung", 25)
 
 println(normal)  // com.example.PersonNormal@7852e922 (메모리 주소, 알아보기 불편)
 println(data)    // PersonData(name=홍길동, age=25) (필드값이 그대로 보임!)
