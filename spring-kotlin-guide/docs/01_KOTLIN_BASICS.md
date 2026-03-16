@@ -157,7 +157,7 @@ println(data)    // PersonData(name=홍길동, age=25) (필드값이 그대로 �
 
 ```kotlin
 data class User(val id: Long, val name: String, val email: String)
-val user = User(1, "홍길동", "hong@gmail.com")
+val user = User(1, "1hyung", "1hyung@gmail.com")
 
 // 이메일만 바꾼 새 객체 생성
 val updated = user.copy(email = "newemail@gmail.com")
