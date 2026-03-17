@@ -202,9 +202,9 @@ val length = name?.length
 println(length)  // null
 
 // name이 값이 있으면 length 호출
-name = "홍길동"
+name = "1hyung"
 val length2 = name?.length
-println(length2)  // 3
+println(length2)  // 6
 ```
 
 **실생활 비유**: "문이 열려있으면 들어가고, 닫혀있으면 그냥 null 반환"
