@@ -222,9 +222,9 @@ var name: String? = null
 val nameLength = name?.length ?: 0
 println(nameLength)  // 0
 
-name = "김철수"
+name = "1hyung"
 val nameLength2 = name?.length ?: 0
-println(nameLength2)  // 3 (김철수의 글자 수)
+println(nameLength2)  // 6 (김철수의 글자 수)
 ```
 
 **실생활 비유**: "냉장고에 우유가 있으면 우유 마시고, 없으면 물 마시기"
