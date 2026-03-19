@@ -224,7 +224,7 @@ println(nameLength)  // 0
 
 name = "1hyung"
 val nameLength2 = name?.length ?: 0
-println(nameLength2)  // 6 (김철수의 글자 수)
+println(nameLength2)  // 6 (1hyung의 글자 수)
 ```
 
 **실생활 비유**: "냉장고에 우유가 있으면 우유 마시고, 없으면 물 마시기"
@@ -236,10 +236,10 @@ println(nameLength2)  // 6 (김철수의 글자 수)
 **의미**: "이건 절대 null이 아니야!"라고 강제로 선언 (위험!)
 
 ```kotlin
-var name: String? = "홍길동"
+var name: String? = "1hyung"
 
 // !! 사용 - null이 아니라고 확신
-val definitelyNotNull = name!!.length  // OK - 3
+val definitelyNotNull = name!!.length  // OK - 6
 
 // 하지만 실제로 null이면?
 name = null
