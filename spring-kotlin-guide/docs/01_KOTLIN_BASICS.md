@@ -303,12 +303,12 @@ name?.let {
 
 **null이 아닌 경우**:
 ```kotlin
-name = "홍길동"
+name = "1hyung"
 
 // if 사용
 if (name != null) {
-    println("이름: $name")          // 출력: 이름: 홍길동
-    println("길이: ${name.length}") // 출력: 길이: 3
+    println("이름: $name")          // 출력: 이름: 1hyung
+    println("길이: ${name.length}") // 출력: 길이: 6
 }
 
 // let 사용 (더 간결!)
