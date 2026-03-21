@@ -14,7 +14,7 @@ val length = name?.let {
 // - 객체 자체를 반환, this로 객체 참조
 data class Person(var name: String = "", var age: Int = 0)
 val person = Person().apply {
-    name = "홍길동"  // this.name (this 생략 가능)
+    name = "1hyung"  // this.name (this 생략 가능)
     age = 20
 }  // person 객체 반환
 

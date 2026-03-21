@@ -47,7 +47,7 @@ data class UserDTO(
 // 사용 예시
 val dto1 = UserDTO()  // 모든 기본값 사용
 val dto2 = UserDTO(id = 123L)  // 일부만 지정
-val dto3 = UserDTO(id = 123L, name = "홍길동", email = "hong@example.com")  // 모두 지정
+val dto3 = UserDTO(id = 123L, name = "1hyung", email = "1hyung@example.com")  // 모두 지정
 ```
 
 ### 예시 2: 복합 DTO
@@ -252,7 +252,7 @@ fun String.isEmail(): Boolean {
     return this.contains("@") && this.contains(".")
 }
 
-val email = "test@example.com"
+val email = "1hyung@example.com"
 if (email.isEmail()) {
     println("Valid email")
 }
@@ -312,15 +312,15 @@ list.addAll(
 ```kotlin
 // apply 없이
 val user = User()
-user.name = "John"
+user.name = "1hyung"
 user.age = 30
-user.email = "john@example.com"
+user.email = "1hyung@example.com"
 
 // apply 사용
 val user = User().apply {
-    name = "John"  // this.name과 동일
+    name = "1hyung"  // this.name과 동일
     age = 30
-    email = "john@example.com"
+    email = "1hyung@example.com"
 }
 ```
 
@@ -557,8 +557,8 @@ extras?.let {
 val numbers = listOf(1, 2, 3, 4, 5)
 val doubled = numbers.map { it * 2 }  // [2, 4, 6, 8, 10]
 
-val users = listOf(User("John", 30), User("Jane", 25))
-val names = users.map { it.name }  // ["John", "Jane"]
+val users = listOf(User("1hyung", 30), User("new", 25))
+val names = users.map { it.name }  // ["1hyung", "new"]
 val ages = users.map { it.age }    // [30, 25]
 ```
 
@@ -593,18 +593,18 @@ return database.runQuery(query).groupBy { it.country }.map { (key, value) ->
 **실전 예시:**
 ```kotlin
 val users = listOf(
-    User("John", 30, "USA"),
-    User("Jane", 25, "UK"),
-    User("Bob", 30, "USA")
+    User("1hyung", 30, "USA"),
+    User("new", 25, "UK"),
+    User("final", 30, "USA")
 )
 
 // 나이별 그룹화
 val byAge = users.groupBy { it.age }
-// {30=[User(John, 30, USA), User(Bob, 30, USA)], 25=[User(Jane, 25, UK)]}
+// {30=[User(1hyung, 30, USA), User(final, 30, USA)], 25=[User(new, 25, UK)]}
 
 // 국가별 그룹화
 val byCountry = users.groupBy { it.country }
-// {USA=[User(John, 30, USA), User(Bob, 30, USA)], UK=[User(Jane, 25, UK)]}
+// {USA=[User(1hyung, 30, USA), User(final, 30, USA)], UK=[User(new, 25, UK)]}
 ```
 
 ### 6.4 associateBy - 맵으로 변환
@@ -620,17 +620,17 @@ CURRENCY_MAP = currencyRepository.getCurrencyList()
 **실전 예시:**
 ```kotlin
 val users = listOf(
-    User(id = 1, name = "John"),
-    User(id = 2, name = "Jane")
+    User(id = 1, name = "1hyung"),
+    User(id = 2, name = "new")
 )
 
 // id를 키로 하는 맵 생성
 val userMap = users.associateBy { it.id }
-// {1=User(1, John), 2=User(2, Jane)}
+// {1=User(1, 1hyung), 2=User(2, new)}
 
 // 커스텀 키-값
 val nameAgeMap = users.associate { it.name to it.age }
-// {John=30, Jane=25}
+// {1hyung=30, new=25}
 ```
 
 ### 6.5 flatMap - 평탄화와 변환
@@ -639,8 +639,8 @@ val nameAgeMap = users.associate { it.name to it.age }
 
 ```kotlin
 val users = listOf(
-    User("John", listOf("A", "B")),
-    User("Jane", listOf("C", "D"))
+    User("1hyung", listOf("A", "B")),
+    User("new", listOf("C", "D"))
 )
 
 val allGrades = users.flatMap { it.grades }
@@ -1192,7 +1192,7 @@ class User(val name: String, val age: Int) {
 
 // 사용
 println(User.MIN_AGE)  // 18
-val user = User.create("John", 25)
+val user = User.create("1hyung", 25)
 if (User.isValidAge(30)) { ... }
 ```
 
@@ -1321,8 +1321,8 @@ class User {
 
 // 사용
 val user = User()
-user.name = "John"  // "Setting name = John" 출력
-println(user.name)  // "Getting name = John" 출력
+user.name = "1hyung"  // "Setting name = 1hyung" 출력
+println(user.name)  // "Getting name = 1hyung" 출력
 ```
 
 ---
@@ -1403,7 +1403,7 @@ class Box<T>(val item: T) {
 // 사용
 val intBox = Box(123)
 val stringBox = Box("Hello")
-val userBox = Box(User("John", 30))
+val userBox = Box(User("1hyung", 30))
 
 println(intBox.getItem())     // 123
 println(stringBox.getItem())  // "Hello"

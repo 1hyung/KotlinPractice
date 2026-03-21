@@ -236,7 +236,7 @@ class BookRepository {
             BookDTO(
                 bookId = null,
                 title = "Clean Code",
-                author = "Robert Martin",
+                author = "1hyung",
                 isbn = "9780132350884",
                 category = "IT",
                 price = 28000,

@@ -132,7 +132,7 @@ curl -X POST http://localhost:8080/practice/books/search \
 **문제**: 다음 조건을 만족하는 도서를 찾는 검색 쿼리를 작성하세요.
 
 1. IT 카테고리의 대출 가능한 책
-2. 저자 이름에 "Martin"이 포함된 책
+2. 저자 이름에 "1hyung"이 포함된 책
 3. 가격이 30000원 이하인 책 (힌트: Repository에 새 메서드 추가 필요)
 
 **과제**:

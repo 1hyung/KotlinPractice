@@ -97,10 +97,10 @@ fun `잘못된 비밀번호로 로그인하면 UnauthorizedException이 발생�
 ```kotlin
 @Test
 fun `assertion 예시`() {
-    val user = UserDTO(id = 1L, name = "홍길동", email = "hong@gmail.com")
+    val user = UserDTO(id = 1L, name = "1hyung", email = "1hyung@example.com")
 
     // 값이 같은지
-    assertEquals("홍길동", user.name)
+    assertEquals("1hyung", user.name)
 
     // null 여부
     assertNotNull(user.id)
@@ -170,7 +170,7 @@ class ValidationTest {
 
     @ParameterizedTest
     @CsvSource(
-        "hong@gmail.com, true",
+        "1hyung@example.com, true",
         "invalid-email, false",
         "missing-at.com, false"
     )
@@ -227,7 +227,7 @@ class OrderServiceTest {
     @Test
     fun `주문 조회 성공`() {
         // Given: mock 동작 정의
-        val expectedOrder = OrderDTO(id = 1L, customerName = "홍길동", amount = 30000)
+        val expectedOrder = OrderDTO(id = 1L, customerName = "1hyung", amount = 30000)
         every { orderRepository.findById(1L) } returns expectedOrder
 
         // When: 실제 테스트
@@ -254,7 +254,7 @@ class OrderServiceTest {
     @Test
     fun `주문 생성 시 Repository save 호출 확인`() {
         // Given
-        val request = OrderDTO(customerName = "홍길동", amount = 30000)
+        val request = OrderDTO(customerName = "1hyung", amount = 30000)
         every { orderRepository.save(any()) } returns request.copy(id = 1L)
 
         // When
@@ -278,7 +278,7 @@ class ReactivOrderServiceTest {
     @Test
     fun `suspend 함수 테스트`() = runTest {
         // suspend 함수는 runTest 블록 안에서 테스트
-        val expected = OrderDTO(id = 1L, customerName = "홍길동")
+        val expected = OrderDTO(id = 1L, customerName = "1hyung")
 
         // coEvery: suspend 함수용 every
         coEvery { orderRepository.findById(1L) } returns expected
@@ -348,8 +348,8 @@ class UserServiceTest {
     @Test
     fun `사용자 생성 - 성공`() = runTest {
         // Given
-        val request = CreateUserRequest(name = "홍길동", email = "hong@gmail.com")
-        val savedUser = UserDTO(id = 1L, name = "홍길동", email = "hong@gmail.com")
+        val request = CreateUserRequest(name = "1hyung", email = "1hyung@example.com")
+        val savedUser = UserDTO(id = 1L, name = "1hyung", email = "1hyung@example.com")
 
         coEvery { userRepository.findByEmail(request.email) } returns null  // 중복 없음
         coEvery { userRepository.save(any()) } returns savedUser
@@ -360,14 +360,14 @@ class UserServiceTest {
 
         // Then
         assertEquals(savedUser, result)
-        coVerify { emailService.sendWelcome("hong@gmail.com") }  // 이메일 전송 확인
+        coVerify { emailService.sendWelcome("1hyung@example.com") }  // 이메일 전송 확인
     }
 
     @Test
     fun `사용자 생성 - 이메일 중복 시 예외 발생`() = runTest {
         // Given
-        val request = CreateUserRequest(name = "홍길동", email = "hong@gmail.com")
-        val existingUser = UserDTO(id = 1L, name = "기존사용자", email = "hong@gmail.com")
+        val request = CreateUserRequest(name = "1hyung", email = "1hyung@example.com")
+        val existingUser = UserDTO(id = 1L, name = "1hyung", email = "1hyung@example.com")
 
         coEvery { userRepository.findByEmail(request.email) } returns existingUser  // 중복!
 
@@ -419,14 +419,14 @@ class OrderIntegrationTest {
     @Test
     fun `주문 생성 통합 테스트`() = runTest {
         // Given
-        val request = OrderDTO(customerName = "홍길동", amount = 50000)
+        val request = OrderDTO(customerName = "1hyung", amount = 50000)
 
         // When (실제 DB 사용)
         val result = orderService.createOrder(request)
 
         // Then
         assertNotNull(result.id)
-        assertEquals("홍길동", result.customerName)
+        assertEquals("1hyung", result.customerName)
 
         // DB에 실제로 저장됐는지 확인
         val found = orderRepository.findById(result.id!!)
@@ -454,7 +454,7 @@ class OrderControllerTest {
     @Test
     fun `GET /api/orders/{id} - 성공`() {
         // Given
-        val order = OrderDTO(id = 1L, customerName = "홍길동", amount = 50000)
+        val order = OrderDTO(id = 1L, customerName = "1hyung", amount = 50000)
         given(orderService.findById(1L)).willReturn(order)
 
         // When & Then (HTTP 요청 시뮬레이션)
@@ -481,8 +481,8 @@ class OrderControllerTest {
     @Test
     fun `POST /api/orders - 주문 생성 성공`() {
         // Given
-        val request = CreateOrderRequest(customerName = "홍길동", amount = 50000)
-        val created = OrderDTO(id = 1L, customerName = "홍길동", amount = 50000)
+        val request = CreateOrderRequest(customerName = "1hyung", amount = 50000)
+        val created = OrderDTO(id = 1L, customerName = "1hyung", amount = 50000)
         given(orderService.createOrder(any())).willReturn(created)
 
         // When & Then
@@ -494,7 +494,7 @@ class OrderControllerTest {
             .expectStatus().isOk
             .expectBody()
             .jsonPath("$.id").isEqualTo(1L)
-            .jsonPath("$.customerName").isEqualTo("홍길동")
+            .jsonPath("$.customerName").isEqualTo("1hyung")
     }
 }
 ```
@@ -643,8 +643,8 @@ class BookServiceTest {
     @Test
     fun `도서 생성 - 성공`() = runTest {
         // Given
-        val request = CreateBookRequest(title = "Clean Code", author = "Martin", price = 28000)
-        val saved = BookDTO(id = 1L, title = "Clean Code", author = "Martin", price = 28000)
+        val request = CreateBookRequest(title = "Clean Code", author = "1hyung", price = 28000)
+        val saved = BookDTO(id = 1L, title = "Clean Code", author = "1hyung", price = 28000)
         coEvery { bookRepository.save(any()) } returns saved
 
         // When

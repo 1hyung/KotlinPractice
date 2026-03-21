@@ -22,18 +22,18 @@ data class User(
 
 // 사용 예시
 fun basicDataClassExample() {
-    val user1 = User(1L, "원형", "bro@example.com")
-    val user2 = User(1L, "홍길동", "hong@example.com")
+    val user1 = User(1L, "1hyung", "1hyung@example.com")
+    val user2 = User(1L, "new", "new@example.com")
 
     // toString() 자동 생성
-    println(user1)  // User(id=1, name=원형, email=bro@example.com)
+    println(user1)  // User(id=1, name=1hyung, email=1hyung@example.com)
 
     // equals() 자동 생성 - 모든 프로퍼티 값 비교
     println(user1 == user2)  // true
 
     // copy() 자동 생성 - 일부 값만 변경하여 복사
-    val user3 = user1.copy(name = "김철수")
-    println(user3)  // User(id=1, name=김철수, email=hong@example.com)
+    val user3 = user1.copy(name = "final")
+    println(user3)  // User(id=1, name=final, email=1hyung@example.com)
 
     // 구조 분해 선언 (destructuring)
     val (id, name, email) = user1
@@ -58,13 +58,13 @@ fun nullableTypeExample() {
     println(customer1)  // CustomerDTO(customerId=null, customerName=, age=null, phoneNumber=null)
 
     // 일부 값만 지정
-    val customer2 = CustomerDTO(customerId = 100L, customerName = "이영희")
-    println(customer2)  // CustomerDTO(customerId=100, customerName=이영희, age=null, phoneNumber=null)
+    val customer2 = CustomerDTO(customerId = 100L, customerName = "final")
+    println(customer2)  // CustomerDTO(customerId=100, customerName=final, age=null, phoneNumber=null)
 
     // named argument로 명확하게 지정
     val customer3 = CustomerDTO(
         customerId = 200L,
-        customerName = "박민수",
+        customerName = "1hyung",
         age = 30,
         phoneNumber = "010-1234-5678"
     )
@@ -137,8 +137,8 @@ data class DetailedUser(
 fun complexDataClassExample() {
     val user = DetailedUser(
         id = 1L,
-        name = "최수진",
-        email = "choi@example.com",
+        name = "1hyung",
+        email = "1hyung@example.com",
         role = UserRole.ADMIN,
         address = Address(
             city = "서울",
@@ -252,8 +252,8 @@ data class UserSearchCriteria(
 fun practicalPatternsExample() {
     // API 요청 예시
     val request = CreateUserRequest(
-        name = "김개발",
-        email = "dev@example.com",
+        name = "1hyung",
+        email = "1hyung@example.com",
         password = "secret123",
         age = 28
     )

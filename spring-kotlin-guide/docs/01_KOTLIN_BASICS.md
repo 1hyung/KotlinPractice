@@ -24,7 +24,7 @@ var nonNull: String = "안녕"  // null 불가
 **연습 문제**:
 ```kotlin
 // 당신의 이름, 나이를 val로 선언해보세요
-// val name: String = "류원형"
+// val name: String = "1hyung"
 // val age: Int = 31
 
 // nullable한 이메일 변수를 선언해보세요
@@ -148,7 +148,7 @@ val normal = PersonNormal("1hyung", 25)
 val data = PersonData("1hyung", 25)
 
 println(normal)  // com.example.PersonNormal@7852e922 (메모리 주소, 알아보기 불편)
-println(data)    // PersonData(name=홍길동, age=25) (필드값이 그대로 보임!)
+println(data)    // PersonData(name=1hyung, age=25) (필드값이 그대로 보임!)
 ```
 
 → 로그 출력이나 디버깅 시 `println()`만 해도 어떤 값인지 바로 확인할 수 있습니다.
@@ -157,15 +157,15 @@ println(data)    // PersonData(name=홍길동, age=25) (필드값이 그대로 �
 
 ```kotlin
 data class User(val id: Long, val name: String, val email: String)
-val user = User(1, "1hyung", "1hyung@gmail.com")
+val user = User(1, "1hyung", "1hyung@example.com")
 
 // 이메일만 바꾼 새 객체 생성
-val updated = user.copy(email = "newemail@gmail.com")
-println(user)    // User(id=1, name=홍길동, email=hong@gmail.com) - 원본 그대로!
-println(updated) // User(id=1, name=홍길동, email=newemail@gmail.com) - 이메일만 변경
+val updated = user.copy(email = "new@example.com")
+println(user)    // User(id=1, name=1hyung, email=1hyung@example.com) - 원본 그대로!
+println(updated) // User(id=1, name=1hyung, email=new@example.com) - 이메일만 변경
 
 // 여러 필드 동시 변경도 가능
-val renamed = user.copy(name = "김철수", email = "kim@gmail.com")
+val renamed = user.copy(name = "new", email = "new@example.com")
 ```
 
 → `val`로 선언한 불변 객체를 업데이트할 때 사용합니다. 원본은 변경하지 않습니다.
@@ -313,8 +313,8 @@ if (name != null) {
 
 // let 사용 (더 간결!)
 name?.let {
-    println("이름: $it")          // 출력: 이름: 홍길동
-    println("길이: ${it.length}") // 출력: 길이: 3
+    println("이름: $it")          // 출력: 이름: 1hyung
+    println("길이: ${it.length}") // 출력: 길이: 6
 }
 ```
 
@@ -382,7 +382,7 @@ println(num4)   // null - Double이라서 Int 변환 실패
 
 ```kotlin
 // 상황 1: email이 null이 아니면 이메일 전송
-var email: String? = "user@example.com"
+var email: String? = "1hyung@example.com"
 
 // TODO: if 사용해서 작성
 // if (email != null) {
@@ -451,8 +451,8 @@ fun processUser(user: User) {
 
 // 테스트
 fun main() {
-    val user1 = User("홍길동", "hong@gmail.com", 25)
-    val user2 = User("김철수", null, null)
+    val user1 = User("1hyung", "1hyung@example.com", 25)
+    val user2 = User("new", null, null)
 
     println("=== 사용자 1 ===")
     processUser(user1)
@@ -491,13 +491,12 @@ fun processUser(user: User) {
 **출력 결과**:
 ```
 === 사용자 1 ===
-이름: 홍길동
-이메일: hong@gmail.com
+이름: 1hyung
+이메일: 1hyung@example.com
 25살입니다
-Gmail 사용자
 
 === 사용자 2 ===
-이름: 김철수
+이름: new
 이메일: 없음
 ```
 </details>
@@ -616,7 +615,7 @@ val result = user?.let {
 }
 
 // apply: 객체 설정 후 객체 자체 반환
-val person = Person("홍길동", 25).apply {
+val person = Person("1hyung", 25).apply {
     age = 26  // this는 생략 가능
 }
 
@@ -673,8 +672,8 @@ val grouped = numbers.groupBy { it % 2 == 0 }
 
 // sortedBy: 정렬
 val users = listOf(
-    User(1, "Alice", null),
-    User(2, "Bob", null)
+    User(1, "1hyung", null),
+    User(2, "new", null)
 )
 val sorted = users.sortedBy { it.name }
 
@@ -702,7 +701,7 @@ fun String.isEmailValid(): Boolean {
 }
 
 // 사용
-val email = "test@example.com"
+val email = "1hyung@example.com"
 println(email.isEmailValid())  // true
 
 // Nullable 확장
@@ -978,8 +977,8 @@ fun main() {
     val manager = BookManager()
 
     manager.addBook(Book(1, "Kotlin in Action", "Dmitry", 30000, "IT"))
-    manager.addBook(Book(2, "Spring Boot", "John", 25000, "IT"))
-    manager.addBook(Book(3, "Clean Code", "Martin", 28000, "IT"))
+    manager.addBook(Book(2, "Spring Boot", "1hyung", 25000, "IT"))
+    manager.addBook(Book(3, "Clean Code", "1hyung", 28000, "IT"))
 
     // 검색
     val found = manager.findByTitle("Kotlin")

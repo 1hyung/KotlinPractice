@@ -27,7 +27,7 @@ class MyClass {
 
 // 12. let, apply, also, run, with
 val result = "text".let { it.length }
-val person = Person().apply { name = "홍길동" }
+val person = Person().apply { name = "1hyung" }
 "log".also { println(it) }
 val length = with(text) { this.length }
 
