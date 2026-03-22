@@ -692,6 +692,293 @@ class BookServiceTest {
 
 ---
 
+## TestContainers — 실제 DB로 통합 테스트
+
+### TestContainers란?
+
+테스트 실행 시 **Docker 컨테이너를 자동으로 띄워** 실제 DB/Kafka/Redis 환경에서 테스트합니다.
+H2 인메모리 DB의 한계(방언 차이, 미지원 기능)를 극복합니다.
+
+```kotlin
+// build.gradle.kts
+testImplementation("org.testcontainers:testcontainers:1.19.3")
+testImplementation("org.testcontainers:junit-jupiter:1.19.3")
+testImplementation("org.testcontainers:postgresql:1.19.3")
+testImplementation("org.testcontainers:mysql:1.19.3")
+testImplementation("org.testcontainers:kafka:1.19.3")
+testImplementation("org.testcontainers:redis-stack:1.19.3")
+```
+
+### PostgreSQL + JPA 통합 테스트
+
+```kotlin
+@SpringBootTest
+@Testcontainers  // TestContainers JUnit 5 확장 활성화
+class BookRepositoryIntegrationTest {
+
+    companion object {
+        // ① 테스트 클래스 전체에서 컨테이너 공유 (속도 최적화)
+        @Container
+        @JvmStatic
+        val postgres = PostgreSQLContainer<Nothing>("postgres:16").apply {
+            withDatabaseName("testdb")
+            withUsername("test")
+            withPassword("test")
+        }
+
+        // ② 컨테이너가 뜬 후 Spring DataSource가 이 URL을 사용하도록 설정
+        @DynamicPropertySource
+        @JvmStatic
+        fun properties(registry: DynamicPropertyRegistry) {
+            registry.add("spring.datasource.url", postgres::getJdbcUrl)
+            registry.add("spring.datasource.username", postgres::getUsername)
+            registry.add("spring.datasource.password", postgres::getPassword)
+        }
+    }
+
+    @Autowired
+    lateinit var bookRepository: BookRepository
+
+    @Test
+    fun `도서 저장 후 조회가 된다`() {
+        // Given
+        val book = Book(title = "Kotlin in Action", author = "Dmitry", price = 30000)
+
+        // When
+        val saved = bookRepository.save(book)
+        val found = bookRepository.findById(saved.id!!).orElseThrow()
+
+        // Then
+        assertThat(found.title).isEqualTo("Kotlin in Action")
+        assertThat(found.author).isEqualTo("Dmitry")
+    }
+
+    @Test
+    fun `상태별 도서 목록 조회가 된다`() {
+        // Given
+        bookRepository.saveAll(listOf(
+            Book(title = "Book1", status = BookStatus.AVAILABLE),
+            Book(title = "Book2", status = BookStatus.BORROWED),
+            Book(title = "Book3", status = BookStatus.AVAILABLE)
+        ))
+
+        // When
+        val available = bookRepository.findByStatus(BookStatus.AVAILABLE)
+
+        // Then
+        assertThat(available).hasSize(2)
+        assertThat(available.map { it.title }).containsExactlyInAnyOrder("Book1", "Book3")
+    }
+}
+```
+
+### R2DBC + PostgreSQL Reactive 통합 테스트
+
+```kotlin
+@SpringBootTest
+@Testcontainers
+class BookR2dbcIntegrationTest {
+
+    companion object {
+        @Container
+        @JvmStatic
+        val postgres = PostgreSQLContainer<Nothing>("postgres:16").apply {
+            withDatabaseName("testdb")
+        }
+
+        @DynamicPropertySource
+        @JvmStatic
+        fun properties(registry: DynamicPropertyRegistry) {
+            // R2DBC는 r2dbc: 프로토콜 사용
+            registry.add("spring.r2dbc.url") {
+                "r2dbc:postgresql://${postgres.host}:${postgres.firstMappedPort}/${postgres.databaseName}"
+            }
+            registry.add("spring.r2dbc.username", postgres::getUsername)
+            registry.add("spring.r2dbc.password", postgres::getPassword)
+            // Flyway는 JDBC 사용 (R2DBC 마이그레이션 불가)
+            registry.add("spring.flyway.url", postgres::getJdbcUrl)
+        }
+    }
+
+    @Autowired
+    lateinit var bookRepository: BookR2dbcRepository
+
+    @Test
+    fun `suspend 함수로 저장 및 조회가 된다`() = runTest {
+        // Given
+        val book = BookEntity(title = "Clean Code", author = "Martin")
+
+        // When
+        val saved = bookRepository.save(book)
+        val found = bookRepository.findById(saved.id!!)
+
+        // Then
+        assertNotNull(found)
+        assertEquals("Clean Code", found!!.title)
+    }
+}
+```
+
+### Redis 통합 테스트
+
+```kotlin
+@SpringBootTest
+@Testcontainers
+class BookCacheServiceIntegrationTest {
+
+    companion object {
+        @Container
+        @JvmStatic
+        val redis = GenericContainer<Nothing>("redis:7-alpine").apply {
+            withExposedPorts(6379)
+        }
+
+        @DynamicPropertySource
+        @JvmStatic
+        fun properties(registry: DynamicPropertyRegistry) {
+            registry.add("spring.data.redis.host", redis::getHost)
+            registry.add("spring.data.redis.port") { redis.getMappedPort(6379) }
+        }
+    }
+
+    @Autowired
+    lateinit var cacheService: BookCacheService
+
+    @Test
+    fun `캐시 저장 후 조회가 된다`() = runTest {
+        // Given
+        val bookId = 1L
+        val book = BookDTO(id = bookId, title = "Kotlin in Action")
+
+        // When
+        cacheService.set(bookId, book)
+        val cached = cacheService.get(bookId)
+
+        // Then
+        assertNotNull(cached)
+        assertEquals("Kotlin in Action", cached!!.title)
+    }
+
+    @Test
+    fun `TTL이 만료되면 캐시가 삭제된다`() = runTest {
+        // Given
+        val bookId = 2L
+        cacheService.setWithTtl(bookId, BookDTO(id = bookId), ttlSeconds = 1)
+
+        // When
+        delay(1500) // TTL 만료 대기
+        val cached = cacheService.get(bookId)
+
+        // Then
+        assertNull(cached)
+    }
+}
+```
+
+### Kafka 통합 테스트
+
+```kotlin
+@SpringBootTest
+@Testcontainers
+class OrderEventIntegrationTest {
+
+    companion object {
+        @Container
+        @JvmStatic
+        val kafka = KafkaContainer(DockerImageName.parse("confluentinc/cp-kafka:7.4.0"))
+
+        @DynamicPropertySource
+        @JvmStatic
+        fun properties(registry: DynamicPropertyRegistry) {
+            registry.add("spring.kafka.bootstrap-servers", kafka::getBootstrapServers)
+        }
+    }
+
+    @Autowired
+    lateinit var orderService: OrderService
+
+    @Autowired
+    lateinit var kafkaTemplate: KafkaTemplate<String, String>
+
+    // ① 컨슈머가 메시지를 받을 때까지 기다리는 래치
+    private val latch = CountDownLatch(1)
+    private var receivedMessage: String? = null
+
+    @KafkaListener(topics = ["order-created"])
+    fun onMessage(message: String) {
+        receivedMessage = message
+        latch.countDown()
+    }
+
+    @Test
+    fun `주문 생성 시 Kafka 이벤트가 발행된다`() = runTest {
+        // When
+        orderService.createOrder(CreateOrderRequest(customerId = 1L, amount = 50000))
+
+        // Then — 최대 10초 대기
+        val received = latch.await(10, TimeUnit.SECONDS)
+        assertTrue(received, "10초 내에 Kafka 메시지를 받지 못했습니다")
+        assertNotNull(receivedMessage)
+        assertTrue(receivedMessage!!.contains("customerId"))
+    }
+}
+```
+
+### 공통 설정 추상화 (AbstractIntegrationTest)
+
+테스트마다 컨테이너를 반복 선언하지 않도록 공통 부모 클래스로 추출합니다.
+
+```kotlin
+// 모든 통합 테스트의 부모 클래스
+@SpringBootTest
+@Testcontainers
+@ActiveProfiles("test")
+abstract class AbstractIntegrationTest {
+
+    companion object {
+        @Container
+        @JvmStatic
+        val postgres = PostgreSQLContainer<Nothing>("postgres:16")
+            .withDatabaseName("testdb")
+
+        @Container
+        @JvmStatic
+        val redis = GenericContainer<Nothing>("redis:7-alpine")
+            .withExposedPorts(6379)
+
+        @DynamicPropertySource
+        @JvmStatic
+        fun properties(registry: DynamicPropertyRegistry) {
+            registry.add("spring.r2dbc.url") {
+                "r2dbc:postgresql://${postgres.host}:${postgres.firstMappedPort}/testdb"
+            }
+            registry.add("spring.r2dbc.username", postgres::getUsername)
+            registry.add("spring.r2dbc.password", postgres::getPassword)
+            registry.add("spring.flyway.url", postgres::getJdbcUrl)
+            registry.add("spring.flyway.user", postgres::getUsername)
+            registry.add("spring.flyway.password", postgres::getPassword)
+            registry.add("spring.data.redis.host", redis::getHost)
+            registry.add("spring.data.redis.port") { redis.getMappedPort(6379) }
+        }
+    }
+}
+
+// 사용 — 컨테이너 설정 없이 바로 테스트 작성
+class BookServiceIntegrationTest : AbstractIntegrationTest() {
+
+    @Autowired
+    lateinit var bookService: BookService
+
+    @Test
+    fun `도서 생성 통합 테스트`() = runTest {
+        val book = bookService.create(CreateBookRequest("테스트 도서", "저자"))
+        assertNotNull(book.id)
+    }
+}
+```
+
+---
+
 ## 학습 체크리스트
 
 **Week 1: JUnit 5 기초**
@@ -715,6 +1002,13 @@ class BookServiceTest {
 - [ ] @SpringBootTest로 통합 테스트 작성 가능
 - [ ] @WebFluxTest로 Controller 테스트 작성 가능
 - [ ] test 환경 설정 파일 작성 가능
+
+**Week 5: TestContainers**
+- [ ] Docker 환경에서 PostgreSQL 컨테이너로 JPA 통합 테스트 작성
+- [ ] R2DBC + PostgreSQL Reactive 통합 테스트 작성
+- [ ] Redis 컨테이너로 캐시 통합 테스트 작성
+- [ ] Kafka 컨테이너로 이벤트 발행/수신 통합 테스트 작성
+- [ ] AbstractIntegrationTest 공통 베이스 클래스 설계
 
 ---
 

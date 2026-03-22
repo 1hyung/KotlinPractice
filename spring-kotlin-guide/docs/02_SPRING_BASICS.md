@@ -1458,6 +1458,250 @@ class CoroutineScheduler {
 
 ---
 
+## 심화 8: AOP (Aspect Oriented Programming)
+
+### 21. AOP란?
+
+**핵심 아이디어**: 여러 클래스에 걸쳐 반복되는 코드(로깅, 성능 측정, 트랜잭션 등)를 **한 곳**에 모으는 기법입니다.
+
+```
+// AOP 없이 — 모든 메서드에 반복
+fun createOrder(dto: OrderDTO): OrderDTO {
+    logger.info("시작")          // 반복
+    val start = System.currentTimeMillis() // 반복
+    try {
+        val result = ... // 실제 로직
+        logger.info("완료: ${System.currentTimeMillis() - start}ms") // 반복
+        return result
+    } catch (e: Exception) {
+        logger.error("실패", e)  // 반복
+        throw e
+    }
+}
+
+// AOP 적용 후 — 실제 로직만 남음
+fun createOrder(dto: OrderDTO): OrderDTO {
+    return ... // 로깅/성능 측정은 Aspect가 자동 처리
+}
+```
+
+**주요 용어**:
+| 용어 | 의미 | 비유 |
+|------|------|------|
+| `Aspect` | 공통 기능 모음 클래스 | 요리사 (공통 재료 준비) |
+| `Advice` | 실제 실행할 코드 | 재료 손질 행위 |
+| `Pointcut` | 어디에 적용할지 표현식 | "모든 Service 메서드" |
+| `JoinPoint` | Advice가 실행되는 시점 | 메서드 실행 순간 |
+
+### 22. AOP 설정
+
+```kotlin
+// build.gradle.kts
+implementation("org.springframework.boot:spring-boot-starter-aop")
+```
+
+```kotlin
+// Application 클래스에 활성화 (Spring Boot는 자동 활성화)
+@SpringBootApplication
+@EnableAspectJAutoProxy  // 명시적 선언 (Spring Boot는 생략 가능)
+class MyApplication
+```
+
+### 23. @Around — 가장 강력한 Advice
+
+메서드 실행 전후를 모두 제어합니다.
+
+```kotlin
+@Aspect
+@Component
+class LoggingAspect {
+
+    private val logger = KotlinLogging.logger {}
+
+    // ① Pointcut: com.example 패키지 하위 모든 Service 구현체의 모든 메서드
+    @Around("execution(* com.example..*ServiceImpl.*(..))")
+    fun logAround(joinPoint: ProceedingJoinPoint): Any? {
+        val className = joinPoint.target.javaClass.simpleName
+        val methodName = joinPoint.signature.name
+        val args = joinPoint.args.joinToString(", ")
+
+        logger.info { "[$className.$methodName] 시작 args=[$args]" }
+        val start = System.currentTimeMillis()
+
+        return try {
+            val result = joinPoint.proceed()  // ② 실제 메서드 실행
+            val elapsed = System.currentTimeMillis() - start
+            logger.info { "[$className.$methodName] 완료 (${elapsed}ms)" }
+            result
+        } catch (e: Exception) {
+            logger.error(e) { "[$className.$methodName] 실패: ${e.message}" }
+            throw e
+        }
+    }
+}
+```
+
+### 24. Pointcut 표현식 문법
+
+```kotlin
+// 패턴: execution([접근제어자] 반환타입 [클래스].메서드명(파라미터))
+
+// ① 특정 패키지 하위 모든 메서드
+@Around("execution(* com.example.order..*.*(..))")
+
+// ② 특정 어노테이션이 붙은 메서드
+@Around("@annotation(com.example.annotation.Timed)")
+
+// ③ 특정 클래스의 모든 메서드
+@Around("within(com.example..*ServiceImpl)")
+
+// ④ 특정 파라미터 타입
+@Around("args(com.example.dto.OrderDTO)")
+
+// ⑤ 조합 (and, or, not)
+@Around("within(com.example..*ServiceImpl) && !execution(* *.find*(..))")
+```
+
+### 25. 실전 패턴 1 — 커스텀 어노테이션으로 성능 측정
+
+```kotlin
+// ① 커스텀 어노테이션 정의
+@Target(AnnotationTarget.FUNCTION)
+@Retention(AnnotationRetention.RUNTIME)
+annotation class Timed(val name: String = "")
+
+// ② Aspect 구현
+@Aspect
+@Component
+class TimedAspect(
+    private val meterRegistry: MeterRegistry  // Micrometer (모니터링 연동)
+) {
+    @Around("@annotation(timed)")
+    fun measureTime(joinPoint: ProceedingJoinPoint, timed: Timed): Any? {
+        val metricName = timed.name.ifBlank {
+            "${joinPoint.target.javaClass.simpleName}.${joinPoint.signature.name}"
+        }
+
+        return Timer.builder(metricName)
+            .register(meterRegistry)
+            .recordCallable { joinPoint.proceed() }
+    }
+}
+
+// ③ 사용 — 어노테이션 하나로 성능 측정
+@Service
+class OrderServiceImpl : OrderService {
+
+    @Timed(name = "order.create")  // 이 메서드의 실행 시간이 자동 측정됨
+    override fun createOrder(dto: OrderDTO): OrderDTO {
+        return repository.save(dto)  // 로직만 남음
+    }
+}
+```
+
+### 26. 실전 패턴 2 — 분산 락 어노테이션 (Redis + AOP)
+
+```kotlin
+// ① 커스텀 어노테이션
+@Target(AnnotationTarget.FUNCTION)
+@Retention(AnnotationRetention.RUNTIME)
+annotation class DistributedLock(
+    val key: String,          // SpEL 표현식 지원: "#dto.orderId"
+    val waitTime: Long = 5,   // 락 획득 대기 시간 (초)
+    val leaseTime: Long = 10  // 락 유지 시간 (초)
+)
+
+// ② AOP 구현
+@Aspect
+@Component
+class DistributedLockAspect(
+    private val redissonClient: RedissonClient
+) {
+    private val logger = KotlinLogging.logger {}
+
+    @Around("@annotation(distributedLock)")
+    fun lock(joinPoint: ProceedingJoinPoint, distributedLock: DistributedLock): Any? {
+        // SpEL로 동적 키 생성 (예: "lock:order:123")
+        val lockKey = "lock:${resolveKey(distributedLock.key, joinPoint)}"
+        val lock = redissonClient.getLock(lockKey)
+
+        val acquired = lock.tryLock(
+            distributedLock.waitTime,
+            distributedLock.leaseTime,
+            TimeUnit.SECONDS
+        )
+
+        if (!acquired) {
+            throw BusinessException("현재 처리 중입니다. 잠시 후 다시 시도해주세요.")
+        }
+
+        return try {
+            joinPoint.proceed()
+        } finally {
+            if (lock.isHeldByCurrentThread) lock.unlock()
+        }
+    }
+
+    private fun resolveKey(keyExpression: String, joinPoint: ProceedingJoinPoint): String {
+        if (!keyExpression.startsWith("#")) return keyExpression
+        val parser = SpelExpressionParser()
+        val context = StandardEvaluationContext()
+        val params = (joinPoint.signature as MethodSignature).parameterNames
+        params.forEachIndexed { i, name -> context.setVariable(name, joinPoint.args[i]) }
+        return parser.parseExpression(keyExpression).getValue(context, String::class.java) ?: keyExpression
+    }
+}
+
+// ③ 사용 — 재고 차감 시 중복 실행 방지
+@Service
+class StockServiceImpl : StockService {
+
+    @DistributedLock(key = "#productId", leaseTime = 5)
+    override fun decreaseStock(productId: Long, quantity: Int) {
+        val stock = repository.findById(productId) ?: throw NotFoundException("상품 없음")
+        if (stock.quantity < quantity) throw BusinessException("재고 부족")
+        repository.save(stock.copy(quantity = stock.quantity - quantity))
+    }
+}
+```
+
+### 27. @Before / @After / @AfterReturning / @AfterThrowing
+
+```kotlin
+@Aspect
+@Component
+class AuditAspect {
+
+    // 메서드 실행 전
+    @Before("execution(* com.example..*Controller.*(..))")
+    fun beforeRequest(joinPoint: JoinPoint) {
+        println("요청 시작: ${joinPoint.signature.name}")
+    }
+
+    // 메서드 정상 완료 후 (반환값 접근 가능)
+    @AfterReturning(
+        pointcut = "execution(* com.example..*Service.create*(..))",
+        returning = "result"
+    )
+    fun afterCreated(joinPoint: JoinPoint, result: Any?) {
+        println("생성 완료: $result")
+    }
+
+    // 예외 발생 후
+    @AfterThrowing(
+        pointcut = "execution(* com.example..*Service.*(..))",
+        throwing = "exception"
+    )
+    fun afterException(joinPoint: JoinPoint, exception: Exception) {
+        println("예외 발생: ${joinPoint.signature.name} - ${exception.message}")
+    }
+}
+```
+
+> **주의**: Spring AOP는 프록시 기반 → **같은 클래스 내부에서 호출한 메서드에는 AOP가 적용되지 않습니다.** (06_KOTLIN_CONVENTIONS.md의 @Transactional 동작 안 하는 에러와 같은 원인)
+
+---
+
 ## 실습 프로젝트: 주문 관리 미니 시스템
 
 주문(Order) 기능을 단순화한 버전을 만들어봅시다.
