@@ -14,10 +14,12 @@
 
 **학습 내용**:
 - 변수, 함수, 클래스
-- Null 안전성
-- 스코프 함수 (let, apply, run 등)
+- Null 안전성 (?, ?:, !!, let)
+- 스코프 함수 (let, apply, run, also, with)
 - 컬렉션 함수 (map, filter 등)
-- 확장 함수
+- 확장 함수, 고차 함수
+- enum class, object, sealed class
+- 스마트 캐스트, 구조 분해, by lazy
 
 **실습**:
 - 간단한 도서 관리 시스템 만들기 (파일 내 예제)
@@ -28,8 +30,10 @@
 **학습 내용**:
 - 의존성 주입 (DI)
 - Controller-Service-Repository 패턴
-- Reactive Programming (suspend 함수)
+- Reactive Programming (suspend 함수, Flow)
 - 3-Layer 모델 (Entity-DTO-Domain)
+- 로깅 (KotlinLogging)
+- @ConfigurationProperties, Spring Profiles
 
 **실습**:
 - TODO 앱 만들기 (Blocking → Reactive 변환)
@@ -111,11 +115,14 @@
 1. DTO에 새 필드 추가
 2. 검색 API 추가
 3. 통계 API 추가
+4. WebClient로 외부 API 연동
+5. @Scheduled 스케줄러 구현
 
 #### Day 6-7: 코드 리뷰 준비
-- 코드 컨벤션 학습
+- 코드 컨벤션 학습 (**06_KOTLIN_CONVENTIONS.md** 참고)
 - Pull Request 작성법
 - 테스트 코드 작성 (**05_TESTING.md** 참고)
+- 자주 만나는 에러 정리 (**06_KOTLIN_CONVENTIONS.md** Part 2)
 
 ---
 
@@ -159,11 +166,18 @@
 spring-kotlin-guide/
 ├── docs/                           # 학습 문서
 │   ├── 00_README.md                # 이 파일 (전체 가이드)
-│   ├── 01_KOTLIN_BASICS.md         # Kotlin 기초 문법
-│   ├── 02_SPRING_BASICS.md         # Spring Boot 기초
+│   ├── 01_KOTLIN_BASICS.md         # Kotlin 기초 ~ 고급 문법
+│   │                               #   변수/함수/클래스, Null 안전성, 스코프 함수,
+│   │                               #   컬렉션, enum, object, 스마트 캐스트,
+│   │                               #   구조 분해, by lazy 등
+│   ├── 02_SPRING_BASICS.md         # Spring Boot 기초 ~ 심화
+│   │                               #   DI, Controller-Service-Repository,
+│   │                               #   Reactive/Flow, 로깅, @ConfigurationProperties,
+│   │                               #   Spring Profiles, WebClient, @Scheduled 등
 │   ├── 03_PROJECT_STRUCTURE.md     # 프로젝트 구조 읽기 가이드
-│   ├── 04_SYNTAX_REFERENCE.md      # 문법 레퍼런스
-│   └── 05_TESTING.md               # 테스트 코드 작성 가이드
+│   ├── 04_SYNTAX_REFERENCE.md      # 문법 레퍼런스 (빠른 참조)
+│   ├── 05_TESTING.md               # 테스트 코드 작성 가이드
+│   └── 06_KOTLIN_CONVENTIONS.md    # 코드 컨벤션 + 자주 만나는 에러
 ├── examples/                       # 문법 예제 코드
 │   └── *.kt
 └── practice/                       # 실습 프로젝트
@@ -181,12 +195,20 @@ spring-kotlin-guide/
 
 ## 학습 체크리스트
 
-### Week 1: 기초
-- [ ] Kotlin 기초 문법 학습 완료
+### Week 1: Kotlin + Spring 기초
+- [ ] Kotlin 기초 문법 학습 완료 (01_KOTLIN_BASICS.md)
+  - [ ] 변수, 함수, 클래스, Null 안전성
+  - [ ] 스코프 함수, 컬렉션 함수, 확장 함수
+  - [ ] enum class, object, 스마트 캐스트
+  - [ ] 구조 분해, by lazy
 - [ ] 도서 관리 시스템 실습 (Kotlin) 완료
-- [ ] Spring Boot 개념 이해
-- [ ] Controller-Service-Repository 패턴 이해
+- [ ] Spring Boot 개념 이해 (02_SPRING_BASICS.md)
+  - [ ] DI, @Component 계열 어노테이션
+  - [ ] Controller-Service-Repository 패턴
+  - [ ] @Transactional, @ConfigurationProperties
+  - [ ] 로깅 설정
 - [ ] Reactive Programming 기본 개념 이해
+  - [ ] suspend 함수, Flow
 - [ ] TODO 앱 실습 완료
 
 ### Week 2: 프로젝트 이해
@@ -196,20 +218,24 @@ spring-kotlin-guide/
 - [ ] 상태 머신 이해
 - [ ] Kafka 메시징 개념 이해
 - [ ] JWT 인증 흐름 이해
+- [ ] Spring Profiles (dev/prod) 이해
 
 ### Week 3: 실습
 - [ ] practice/book Level 1 완료 (기본 CRUD)
 - [ ] practice/book Level 2 완료 (검색)
 - [ ] practice/book Level 3 완료 (통계)
 - [ ] practice/book Level 4 완료 (도전 과제)
+- [ ] WebClient로 외부 API 호출 구현
 - [ ] 모든 API Postman 테스트 완료
 
 ### Week 4: 심화
 - [ ] 복잡한 도메인 구조 파악
 - [ ] Factory 패턴 이해
 - [ ] Redis 캐싱 동작 이해
+- [ ] @Scheduled 스케줄러 구현
 - [ ] 작은 기능 추가 성공
 - [ ] 테스트 코드 작성 (05_TESTING.md 학습 완료)
+- [ ] 코드 컨벤션 숙지 (06_KOTLIN_CONVENTIONS.md)
 - [ ] 코드 리뷰 받기
 
 ---
@@ -264,13 +290,20 @@ spring-kotlin-guide/
 
 ### 공식 문서
 - [Kotlin 공식 문서](https://kotlinlang.org/docs/home.html)
-- [Spring Boot 공식 문서](https://spring.io/projects/spring-boot)
-- [Komapper 문서](https://www.komapper.org/)
+- [Kotlin 코딩 컨벤션](https://kotlinlang.org/docs/coding-conventions.html)
 - [Kotlin Coroutines 가이드](https://kotlinlang.org/docs/coroutines-guide.html)
+- [Kotlin Flow 가이드](https://kotlinlang.org/docs/flow.html)
+- [Spring Boot 공식 문서](https://spring.io/projects/spring-boot)
+- [Spring WebFlux 문서](https://docs.spring.io/spring-framework/reference/web/webflux.html)
+- [Komapper 문서](https://www.komapper.org/)
 
 ### 온라인 실습
 - [Kotlin Koans](https://play.kotlinlang.org/koans) - Kotlin 문법 연습
 - [Spring Guides](https://spring.io/guides) - Spring Boot 튜토리얼
+
+### 코드 품질 도구
+- [ktlint](https://github.com/pinterest/ktlint) - Kotlin 코드 스타일 검사
+- [detekt](https://detekt.dev/) - Kotlin 정적 분석
 
 ---
 

@@ -1001,29 +1001,480 @@ fun main() {
 
 ---
 
+### 13. enum class (열거형 클래스)
+
+상태, 카테고리처럼 **정해진 값의 집합**을 표현할 때 사용합니다. Spring 프로젝트에서 상태 관리에 필수입니다.
+
+#### 기본 사용법
+
+```kotlin
+// 기본 enum
+enum class Direction {
+    NORTH, SOUTH, EAST, WEST
+}
+
+// 프로퍼티를 가진 enum (Spring 프로젝트에서 가장 많이 쓰는 형태)
+enum class OrderStatus(val displayName: String, val code: String) {
+    PENDING("대기중", "O001"),
+    CONFIRMED("확정", "O002"),
+    PROCESSING("처리중", "O003"),
+    COMPLETED("완료", "O004"),
+    CANCELLED("취소됨", "O005")
+}
+
+// 사용
+val status = OrderStatus.PENDING
+println(status.displayName)  // "대기중"
+println(status.code)         // "O001"
+println(status.name)         // "PENDING" (모든 enum이 가진 이름)
+println(status.ordinal)      // 0 (순서, 0부터 시작)
+```
+
+#### when과 함께 사용 (가장 중요한 패턴)
+
+```kotlin
+fun getStatusMessage(status: OrderStatus): String {
+    return when (status) {
+        OrderStatus.PENDING   -> "주문이 접수되었습니다"
+        OrderStatus.CONFIRMED -> "주문이 확정되었습니다"
+        OrderStatus.PROCESSING -> "상품을 준비 중입니다"
+        OrderStatus.COMPLETED -> "배송이 완료되었습니다"
+        OrderStatus.CANCELLED -> "주문이 취소되었습니다"
+        // else 없어도 됨: 모든 경우를 다뤘으므로 컴파일러가 보장
+    }
+}
+```
+
+> **핵심**: sealed class와 달리 enum은 모든 값이 같은 타입이고 인스턴스를 추가로 만들 수 없습니다. 단순한 상태/카테고리에는 enum, 각 케이스가 다른 데이터를 가져야 한다면 sealed class를 쓰세요.
+
+#### enum 유틸리티
+
+```kotlin
+// 모든 값 순회
+OrderStatus.values().forEach { println(it.displayName) }
+
+// 이름으로 찾기 (없으면 예외)
+val status = OrderStatus.valueOf("PENDING")
+
+// 안전하게 찾기 (없으면 null)
+val status = enumValues<OrderStatus>().find { it.name == "PENDING" }
+
+// 코드로 찾기 (커스텀 검색)
+val status = OrderStatus.values().find { it.code == "O001" }
+```
+
+#### Spring에서의 실전 예시
+
+```kotlin
+// 1. API 요청/응답에서 enum 사용
+data class OrderDTO(
+    val id: Long,
+    val status: OrderStatus,   // enum 타입으로 직접 받기
+    val customerName: String
+)
+
+// 2. 상태 전이 검증을 enum 안에 넣기
+enum class OrderStatus(val displayName: String) {
+    PENDING("대기중"),
+    CONFIRMED("확정"),
+    COMPLETED("완료"),
+    CANCELLED("취소됨");
+
+    fun canTransitionTo(next: OrderStatus): Boolean {
+        return when (this) {
+            PENDING   -> next == CONFIRMED || next == CANCELLED
+            CONFIRMED -> next == COMPLETED || next == CANCELLED
+            COMPLETED -> false   // 완료된 주문은 변경 불가
+            CANCELLED -> false   // 취소된 주문은 변경 불가
+        }
+    }
+}
+
+// 사용
+val current = OrderStatus.PENDING
+if (current.canTransitionTo(OrderStatus.CONFIRMED)) {
+    println("상태 변경 가능")
+}
+```
+
+---
+
+### 14. object 키워드 (싱글톤과 익명 객체)
+
+#### 14-1. object 선언 (싱글톤)
+
+프로그램 전체에서 단 하나의 인스턴스만 존재하는 객체입니다.
+
+```kotlin
+// 싱글톤 유틸리티 객체
+object DateUtils {
+    fun now(): LocalDateTime = LocalDateTime.now()
+
+    fun format(date: LocalDateTime): String {
+        return date.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+    }
+}
+
+// 사용 - 인스턴스 생성 없이 바로 사용
+val now = DateUtils.now()
+val formatted = DateUtils.format(now)
+```
+
+> companion object와의 차이: `companion object`는 특정 클래스 안에 정의, `object`는 독립적으로 존재
+
+#### 14-2. 익명 객체 (Anonymous Object)
+
+인터페이스나 추상 클래스를 일회성으로 구현할 때 사용합니다.
+
+```kotlin
+interface ClickListener {
+    fun onClick(id: Long)
+}
+
+// 익명 객체로 일회성 구현
+val listener = object : ClickListener {
+    override fun onClick(id: Long) {
+        println("클릭됨: $id")
+    }
+}
+
+listener.onClick(1L)
+```
+
+#### 14-3. companion object 심화
+
+```kotlin
+class User(val name: String, val email: String) {
+    companion object {
+        // 팩토리 메서드 패턴 - 생성 로직을 companion object에 넣기
+        fun create(name: String, email: String): User {
+            require(name.isNotBlank()) { "이름은 필수입니다" }
+            require(email.contains("@")) { "이메일 형식이 올바르지 않습니다" }
+            return User(name, email)
+        }
+
+        // 상수 정의
+        const val MAX_NAME_LENGTH = 50
+    }
+}
+
+// 사용
+val user = User.create("1hyung", "1hyung@example.com")
+println(User.MAX_NAME_LENGTH)  // 50
+```
+
+---
+
+### 15. 스마트 캐스트 (Smart Cast)
+
+`is` 로 타입을 확인하면 해당 블록 안에서 **자동으로 캐스팅**됩니다. 별도의 as 변환 없이 바로 타입의 멤버에 접근 가능합니다.
+
+```kotlin
+// is 체크 후 스마트 캐스트
+fun describe(obj: Any): String {
+    return when (obj) {
+        is String -> "문자열, 길이: ${obj.length}"     // obj가 자동으로 String 타입
+        is Int    -> "정수, 두 배: ${obj * 2}"         // obj가 자동으로 Int 타입
+        is List<*> -> "리스트, 크기: ${obj.size}"      // obj가 자동으로 List 타입
+        else      -> "알 수 없음"
+    }
+}
+
+println(describe("Kotlin"))  // "문자열, 길이: 6"
+println(describe(42))        // "정수, 두 배: 84"
+```
+
+#### sealed class와 스마트 캐스트 (가장 중요한 조합)
+
+```kotlin
+sealed class ApiResult<out T> {
+    data class Success<T>(val data: T) : ApiResult<T>()
+    data class Error(val message: String, val code: Int) : ApiResult<Nothing>()
+    object Loading : ApiResult<Nothing>()
+}
+
+fun handleResult(result: ApiResult<String>) {
+    when (result) {
+        is ApiResult.Success -> {
+            // result가 자동으로 ApiResult.Success 타입으로 인식
+            println("성공: ${result.data}")
+        }
+        is ApiResult.Error -> {
+            // result가 자동으로 ApiResult.Error 타입으로 인식
+            println("오류 ${result.code}: ${result.message}")
+        }
+        ApiResult.Loading -> println("로딩 중...")
+    }
+}
+```
+
+#### if 블록에서의 스마트 캐스트
+
+```kotlin
+fun processInput(input: Any?) {
+    // null 체크 후 스마트 캐스트
+    if (input == null) return
+    // 여기서부터 input은 non-nullable 타입
+
+    if (input is String) {
+        println(input.uppercase())   // String 타입으로 자동 캐스트
+    }
+}
+```
+
+---
+
+### 16. 구조 분해 선언 (Destructuring)
+
+data class의 값들을 **여러 변수에 한 번에** 꺼낼 수 있습니다.
+
+#### data class 구조 분해
+
+```kotlin
+data class Point(val x: Int, val y: Int)
+data class User(val name: String, val age: Int, val email: String)
+
+val point = Point(10, 20)
+val (x, y) = point
+println("x=$x, y=$y")  // x=10, y=20
+
+val user = User("1hyung", 25, "1hyung@example.com")
+val (name, age, email) = user
+println("$name ($age)") // "1hyung (25)"
+
+// 일부만 꺼낼 때: 필요 없는 것은 _ 로 무시
+val (_, _, userEmail) = user
+println(userEmail)  // "1hyung@example.com"
+```
+
+#### Map 구조 분해 (실전에서 자주 사용)
+
+```kotlin
+val map = mapOf("name" to "1hyung", "age" to "25")
+
+// for 루프에서 구조 분해
+for ((key, value) in map) {
+    println("$key = $value")
+}
+
+// forEach에서 구조 분해
+map.forEach { (key, value) ->
+    println("$key: $value")
+}
+```
+
+#### 함수 반환값 구조 분해
+
+```kotlin
+// Pair 반환
+fun getMinMax(list: List<Int>): Pair<Int, Int> {
+    return list.min() to list.max()
+}
+
+val (min, max) = getMinMax(listOf(3, 1, 4, 1, 5, 9))
+println("최솟값: $min, 최댓값: $max")
+
+// Spring에서 자주 보이는 패턴
+data class PageResult<T>(val items: List<T>, val totalCount: Long)
+
+fun getBooks(): PageResult<Book> = PageResult(books, 100L)
+
+val (items, total) = getBooks()
+println("총 ${total}개 중 ${items.size}개 조회")
+```
+
+---
+
+### 17. by lazy / 프로퍼티 위임 (Property Delegation)
+
+#### by lazy - 처음 사용할 때만 초기화
+
+무거운 객체 초기화를 **처음 필요한 시점까지 미루는** 패턴입니다.
+
+```kotlin
+class HeavyService {
+    // 처음 호출할 때 한 번만 초기화
+    val expensiveData: List<String> by lazy {
+        println("데이터 로딩 중...")  // 처음 접근 시 한 번만 실행
+        loadFromDatabase()
+    }
+
+    private fun loadFromDatabase(): List<String> {
+        return listOf("data1", "data2", "data3")
+    }
+}
+
+val service = HeavyService()
+// 아직 loadFromDatabase() 호출 안 됨
+println(service.expensiveData)  // 여기서 처음 초기화
+println(service.expensiveData)  // 두 번째부터는 캐시된 값 반환
+```
+
+**출력**:
+```
+데이터 로딩 중...
+[data1, data2, data3]
+[data1, data2, data3]
+```
+
+#### Spring에서의 실전 사용
+
+```kotlin
+@Component
+class OrderProcessor {
+    // 로깅 - 가장 흔한 by lazy 사용 패턴
+    private val logger by lazy { LoggerFactory.getLogger(this::class.java) }
+
+    // 정규식 - 한 번만 컴파일
+    private val emailRegex by lazy {
+        Regex("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")
+    }
+
+    fun validateEmail(email: String): Boolean {
+        return emailRegex.matches(email)
+    }
+}
+```
+
+#### by Delegates.observable - 값 변경 감지
+
+```kotlin
+import kotlin.properties.Delegates
+
+class Order {
+    var status: String by Delegates.observable("PENDING") { property, oldValue, newValue ->
+        println("${property.name} 변경: $oldValue → $newValue")
+    }
+}
+
+val order = Order()
+order.status = "CONFIRMED"  // "status 변경: PENDING → CONFIRMED"
+order.status = "COMPLETED"  // "status 변경: CONFIRMED → COMPLETED"
+```
+
+---
+
+## 실습 프로젝트: 간단한 도서 관리 시스템
+
+위에서 배운 내용을 종합해서 만들어봅시다.
+
+```kotlin
+// 1. 데이터 클래스 정의
+data class Book(
+    val id: Long,
+    val title: String,
+    val author: String,
+    val price: Int,
+    val category: String
+)
+
+// 2. 도서 관리 클래스
+class BookManager {
+    private val books = mutableListOf<Book>()
+
+    // 도서 추가
+    fun addBook(book: Book) {
+        books.add(book)
+        println("도서 추가: ${book.title}")
+    }
+
+    // 제목으로 검색
+    fun findByTitle(title: String): Book? {
+        return books.find { it.title.contains(title, ignoreCase = true) }
+    }
+
+    // 카테고리별 도서 목록
+    fun findByCategory(category: String): List<Book> {
+        return books.filter { it.category == category }
+    }
+
+    // 가격대 검색
+    fun findByPriceRange(min: Int, max: Int): List<Book> {
+        return books.filter { it.price in min..max }
+    }
+
+    // 전체 도서 출력
+    fun printAllBooks() {
+        books.forEach { book ->
+            println("${book.id}. ${book.title} - ${book.author} (${book.price}원)")
+        }
+    }
+}
+
+// 3. 실행
+fun main() {
+    val manager = BookManager()
+
+    manager.addBook(Book(1, "Kotlin in Action", "Dmitry", 30000, "IT"))
+    manager.addBook(Book(2, "Spring Boot", "1hyung", 25000, "IT"))
+    manager.addBook(Book(3, "Clean Code", "1hyung", 28000, "IT"))
+
+    // 검색
+    val found = manager.findByTitle("Kotlin")
+    println("검색 결과: $found")
+
+    // 가격대 검색
+    val affordable = manager.findByPriceRange(20000, 27000)
+    println("2만원~2.7만원 도서: $affordable")
+
+    // 전체 출력
+    manager.printAllBooks()
+}
+```
+
+**TODO: 직접 추가 기능 구현해보기**
+1. `removeBook(id: Long)` - 도서 삭제 함수
+2. `updatePrice(id: Long, newPrice: Int)` - 가격 수정 함수
+3. `getMostExpensiveBook()` - 가장 비싼 도서 찾기
+4. `getAveragePrice()` - 평균 가격 계산
+
+---
+
 ## 학습 체크리스트
 
+### 기본 문법
 - [ ] 변수 선언 (val, var, nullable)
-- [ ] 함수 작성 (기본, 단일 표현식)
+- [ ] 함수 작성 (기본, 단일 표현식, 기본 매개변수)
 - [ ] 클래스와 데이터 클래스
-- [ ] Null 안전성 (?, ?:, !!, let)
+
+### Null 안전성
+- [ ] 안전 호출 (?.)
+- [ ] 엘비스 연산자 (?:)
+- [ ] !! 연산자
+- [ ] Safe Cast (as?)
+- [ ] let으로 null 체크
+
+### 함수형 프로그래밍
 - [ ] 스코프 함수 (let, apply, run, also, with)
-- [ ] 컬렉션 함수 (map, filter, find, groupBy)
+- [ ] 컬렉션 함수 (map, filter, find, groupBy, sortedBy)
+- [ ] 고차 함수와 람다
 - [ ] 확장 함수
+
+### 클래스 계층
 - [ ] when 표현식
 - [ ] sealed class
+- [ ] enum class (상태/카테고리 표현)
 - [ ] companion object
-- [ ] 고차 함수와 람다
+- [ ] object 키워드 (싱글톤, 익명 객체)
 - [ ] interface 패턴 이해
+
+### 고급 기능
+- [ ] 스마트 캐스트 (is + when)
+- [ ] 구조 분해 선언 (data class, Map)
+- [ ] by lazy / 프로퍼티 위임
+
+### 실습
 - [ ] 실습 프로젝트 완성
+- [ ] TODO 추가 기능 구현
 
 ---
 
 ## 다음 단계
 
 Kotlin 기초를 마스터했다면:
-1. **Coroutine 학습** - `suspend` 함수 사용법
-2. **Spring Boot 기초** - 다음 학습 파일 참고
+1. **Coroutine 학습** - `suspend` 함수, Flow 등 → `02_SPRING_BASICS.md` 참고
+2. **Spring Boot 기초** - DI, Controller-Service-Repository 패턴
+3. **코드 컨벤션** - `06_KOTLIN_CONVENTIONS.md` 참고
 
 ---
 
@@ -1031,3 +1482,4 @@ Kotlin 기초를 마스터했다면:
 
 - [Kotlin 공식 문서](https://kotlinlang.org/docs/home.html)
 - [Kotlin Koans (실습)](https://play.kotlinlang.org/koans)
+- [Kotlin 언어 레퍼런스](https://kotlinlang.org/docs/reference/)

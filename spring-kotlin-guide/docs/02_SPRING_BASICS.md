@@ -886,6 +886,578 @@ class OrderController(
 
 ---
 
+## 심화 2: 로깅 (Logging)
+
+Spring 프로젝트에서 로그는 디버깅과 운영 모니터링의 핵심입니다.
+
+### 15. 로깅 설정과 사용법
+
+**의존성**: Spring Boot는 기본적으로 SLF4J + Logback을 포함합니다.
+
+**Kotlin 스타일 로깅 (가장 권장)**:
+```kotlin
+// build.gradle.kts에 추가
+implementation("io.github.oshai:kotlin-logging-jvm:5.1.0")
+```
+
+```kotlin
+import io.github.oshai.kotlinlogging.KotlinLogging
+
+@Service
+class OrderServiceImpl(
+    private val repository: OrderRepository
+) : OrderService {
+
+    // 클래스 수준에서 한 번만 선언
+    private val logger = KotlinLogging.logger {}
+
+    override suspend fun createOrder(dto: OrderDTO): OrderDTO {
+        logger.info { "주문 생성 시작: customerId=${dto.customerId}" }
+
+        val order = repository.save(dto)
+
+        logger.info { "주문 생성 완료: orderId=${order.id}" }
+        return order
+    }
+
+    override suspend fun cancelOrder(id: Long): OrderDTO {
+        logger.warn { "주문 취소 요청: orderId=$id" }
+
+        val order = repository.findById(id)
+            ?: throw NotFoundException("주문을 찾을 수 없습니다: $id").also {
+                logger.error { "주문 취소 실패 - 주문 없음: orderId=$id" }
+            }
+
+        return repository.save(order.copy(status = OrderStatus.CANCELLED))
+    }
+}
+```
+
+**로그 레벨 가이드**:
+```kotlin
+logger.trace { "가장 상세한 로그, 개발 시에만" }
+logger.debug { "디버깅용 상세 정보: value=$someValue" }
+logger.info  { "정상적인 주요 이벤트: 주문 생성, 사용자 로그인 등" }
+logger.warn  { "경고: 처리는 됐지만 주의 필요한 상황" }
+logger.error { "오류: 처리 실패, 예외 발생" }
+
+// 예외와 함께 로깅
+try {
+    riskyOperation()
+} catch (e: Exception) {
+    logger.error(e) { "작업 실패: message=${e.message}" }
+}
+```
+
+**application.yml 로그 레벨 설정**:
+```yaml
+logging:
+  level:
+    root: INFO                              # 기본 레벨
+    com.example: DEBUG                      # 내 패키지는 DEBUG
+    org.springframework.web: DEBUG          # Spring Web 디버그
+    org.springframework.security: DEBUG     # Security 디버그
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+```
+
+**SLF4J 사용 (라이브러리 추가 없이)**:
+```kotlin
+import org.slf4j.LoggerFactory
+
+@Service
+class OrderServiceImpl {
+    private val logger = LoggerFactory.getLogger(this::class.java)
+
+    fun process() {
+        logger.info("처리 시작")
+        logger.debug("상세 정보: {}", someValue)  // {} 플레이스홀더 방식
+    }
+}
+```
+
+> **규칙**: 람다 `{ }` 방식을 쓰면 로그 레벨이 비활성화됐을 때 문자열 생성 자체를 건너뜁니다. 성능에 유리하므로 KotlinLogging의 람다 방식을 권장합니다.
+
+---
+
+## 심화 3: @ConfigurationProperties - 설정 값 관리
+
+### 16. application.yml 값을 코드로 가져오기
+
+**application.yml**:
+```yaml
+app:
+  jwt:
+    secret: "my-super-secret-key-must-be-long"
+    expiration-ms: 86400000   # 24시간
+    refresh-expiration-ms: 604800000  # 7일
+
+  kafka:
+    bootstrap-servers: "localhost:9092"
+    consumer-group: "my-app-group"
+
+  redis:
+    host: "localhost"
+    port: 6379
+    password: ""
+    ttl-seconds: 3600
+```
+
+**방법 1: @ConfigurationProperties (권장 - 타입 안전)**:
+```kotlin
+// build.gradle.kts에 추가
+kapt("org.springframework.boot:spring-boot-configuration-processor")
+
+@ConfigurationProperties(prefix = "app.jwt")
+data class JwtProperties(
+    val secret: String,
+    val expirationMs: Long,
+    val refreshExpirationMs: Long
+)
+
+@ConfigurationProperties(prefix = "app.redis")
+data class RedisProperties(
+    val host: String,
+    val port: Int,
+    val password: String,
+    val ttlSeconds: Long
+)
+
+// Application 클래스에서 활성화
+@SpringBootApplication
+@EnableConfigurationProperties(JwtProperties::class, RedisProperties::class)
+class MyApplication
+
+// 사용
+@Service
+class JwtService(
+    private val jwtProperties: JwtProperties  // 주입받기
+) {
+    fun createToken(userId: Long): String {
+        return Jwts.builder()
+            .setSubject(userId.toString())
+            .setExpiration(Date(System.currentTimeMillis() + jwtProperties.expirationMs))
+            .signWith(Keys.hmacShaKeyFor(jwtProperties.secret.toByteArray()))
+            .compact()
+    }
+}
+```
+
+**방법 2: @Value (단순한 값 하나)**:
+```kotlin
+@Service
+class SimpleService {
+    @Value("\${app.jwt.secret}")
+    private lateinit var jwtSecret: String
+
+    @Value("\${app.redis.port:6379}")  // 기본값 지정
+    private val redisPort: Int = 0
+}
+```
+
+**@ConfigurationProperties vs @Value 비교**:
+| 상황 | 권장 방법 |
+|------|----------|
+| 관련 설정이 여러 개 | `@ConfigurationProperties` |
+| 설정 값 하나만 필요 | `@Value` |
+| 타입 변환 자동화 | `@ConfigurationProperties` |
+| 설정 자동완성 지원 | `@ConfigurationProperties` |
+
+---
+
+## 심화 4: Spring Profiles - 환경별 설정
+
+### 17. dev / prod 환경 분리
+
+**설정 파일 구조**:
+```
+src/main/resources/
+├── application.yml          # 공통 설정
+├── application-dev.yml      # 개발 환경
+├── application-prod.yml     # 운영 환경
+└── application-test.yml     # 테스트 환경
+```
+
+**application.yml (공통)**:
+```yaml
+spring:
+  application:
+    name: my-app
+  profiles:
+    active: dev   # 기본 프로파일 (로컬 개발용)
+
+app:
+  name: "My Application"
+```
+
+**application-dev.yml (개발)**:
+```yaml
+spring:
+  datasource:
+    url: jdbc:h2:mem:devdb   # 메모리 DB
+  redis:
+    host: localhost
+
+logging:
+  level:
+    com.example: DEBUG
+
+app:
+  jwt:
+    expiration-ms: 86400000  # 24시간
+```
+
+**application-prod.yml (운영)**:
+```yaml
+spring:
+  datasource:
+    url: ${DB_URL}           # 환경 변수로 주입
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+  redis:
+    host: ${REDIS_HOST}
+
+logging:
+  level:
+    root: WARN
+    com.example: INFO
+
+app:
+  jwt:
+    expiration-ms: 3600000   # 1시간 (더 짧게)
+```
+
+**코드에서 프로파일별 Bean 등록**:
+```kotlin
+// 개발 환경에서만 활성화
+@Profile("dev")
+@Component
+class DevDataInitializer(
+    private val orderRepository: OrderRepository
+) : ApplicationRunner {
+    override fun run(args: ApplicationArguments) {
+        // 개발용 더미 데이터 초기화
+        orderRepository.saveAll(createDummyOrders())
+        println("개발용 더미 데이터 초기화 완료")
+    }
+}
+
+// 운영 환경에서만 활성화
+@Profile("prod")
+@Component
+class ProdMonitoringSetup {
+    // 운영 모니터링 설정
+}
+```
+
+**프로파일 활성화 방법**:
+```bash
+# 실행 시 지정
+java -jar app.jar --spring.profiles.active=prod
+
+# 환경 변수로 지정
+SPRING_PROFILES_ACTIVE=prod java -jar app.jar
+
+# application.yml에서 기본값 지정
+spring:
+  profiles:
+    active: dev
+```
+
+---
+
+## 심화 5: Kotlin Flow - 데이터 스트리밍
+
+### 18. Flow란?
+
+`suspend` 함수는 값을 하나만 반환합니다. **Flow**는 여러 값을 비동기적으로 순차 방출하는 스트림입니다.
+
+```
+일반 함수:     반환 ────────● 끝
+suspend 함수:  대기 ────────● 끝
+Flow:          방출 ─●─●─●─●─ 끝
+```
+
+**기본 사용법**:
+```kotlin
+import kotlinx.coroutines.flow.*
+
+// Flow 생성
+fun generateNumbers(): Flow<Int> = flow {
+    for (i in 1..5) {
+        delay(100)   // 100ms마다
+        emit(i)      // 값 방출
+    }
+}
+
+// Flow 수집
+suspend fun main() {
+    generateNumbers()
+        .filter { it % 2 == 0 }   // 짝수만
+        .map { it * it }           // 제곱
+        .collect { value ->
+            println(value)         // 4, 16
+        }
+}
+```
+
+**Spring WebFlux에서 Flow 사용**:
+```kotlin
+// Repository에서 Flow 반환
+interface OrderRepository {
+    fun findAll(): Flow<OrderDTO>
+    fun findByStatus(status: OrderStatus): Flow<OrderDTO>
+}
+
+// Service에서 Flow 처리
+@Service
+class OrderServiceImpl(
+    private val repository: OrderRepository
+) : OrderService {
+
+    override fun findAllOrders(): Flow<OrderDTO> {
+        return repository.findAll()
+            .filter { it.status != OrderStatus.CANCELLED }
+            .map { it.toResponse() }
+    }
+
+    // Flow를 List로 변환할 때
+    override suspend fun findAllAsList(): List<OrderDTO> {
+        return repository.findAll().toList()
+    }
+}
+
+// Controller에서 Flow 반환 (SSE - Server-Sent Events)
+@RestController
+class OrderController(private val service: OrderService) {
+
+    // Flow를 그대로 반환 → Spring이 스트리밍 처리
+    @GetMapping("/api/orders/stream", produces = [MediaType.TEXT_EVENT_STREAM_VALUE])
+    fun streamOrders(): Flow<OrderDTO> {
+        return service.findAllOrders()
+    }
+
+    // List로 변환해서 반환
+    @GetMapping("/api/orders")
+    suspend fun listOrders(): List<OrderDTO> {
+        return service.findAllAsList()
+    }
+}
+```
+
+**Flow 주요 연산자**:
+```kotlin
+val flow = repository.findAll()
+
+// 변환
+flow.map { it.toDTO() }
+flow.filter { it.status == OrderStatus.ACTIVE }
+flow.take(10)                  // 처음 10개만
+flow.drop(5)                   // 처음 5개 건너뜀
+
+// 집계
+flow.toList()                  // List로 수집
+flow.first()                   // 첫 번째 값 (없으면 예외)
+flow.firstOrNull()             // 첫 번째 값 (없으면 null)
+flow.count()                   // 개수
+
+// 에러 처리
+flow.catch { e -> emit(fallbackDTO) }  // 오류 시 대체값 방출
+flow.onEach { logger.debug { "처리: $it" } }  // 각 값마다 부가 작업
+
+// 합치기
+flow1.flatMapMerge { fetchRelated(it) }  // 각 값에서 새 Flow 시작 (병렬)
+flow1.flatMapConcat { fetchRelated(it) } // 각 값에서 새 Flow 시작 (순차)
+```
+
+---
+
+## 심화 6: WebClient - 외부 API 호출
+
+### 19. WebClient 설정과 사용
+
+다른 서버의 API를 호출할 때 사용합니다. `RestTemplate`의 Reactive 버전입니다.
+
+**설정**:
+```kotlin
+@Configuration
+class WebClientConfig {
+
+    @Bean
+    fun webClient(): WebClient {
+        return WebClient.builder()
+            .baseUrl("https://api.example.com")
+            .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+            .codecs { it.defaultCodecs().maxInMemorySize(10 * 1024 * 1024) }  // 10MB
+            .build()
+    }
+
+    // 여러 외부 서비스가 있을 때 이름으로 구분
+    @Bean("paymentWebClient")
+    fun paymentWebClient(): WebClient {
+        return WebClient.builder()
+            .baseUrl("https://payment.example.com")
+            .build()
+    }
+}
+```
+
+**기본 사용법**:
+```kotlin
+@Service
+class ExternalApiService(
+    private val webClient: WebClient
+) {
+    // GET 요청
+    suspend fun getUser(userId: Long): UserDTO {
+        return webClient.get()
+            .uri("/users/$userId")
+            .retrieve()
+            .awaitBody<UserDTO>()   // suspend + 역직렬화
+    }
+
+    // POST 요청
+    suspend fun createOrder(request: OrderRequest): OrderDTO {
+        return webClient.post()
+            .uri("/orders")
+            .bodyValue(request)
+            .retrieve()
+            .awaitBody<OrderDTO>()
+    }
+
+    // 헤더 추가
+    suspend fun getSecureData(token: String): DataDTO {
+        return webClient.get()
+            .uri("/secure/data")
+            .header(HttpHeaders.AUTHORIZATION, "Bearer $token")
+            .retrieve()
+            .awaitBody<DataDTO>()
+    }
+
+    // 쿼리 파라미터
+    suspend fun searchProducts(keyword: String, page: Int): List<ProductDTO> {
+        return webClient.get()
+            .uri { builder ->
+                builder
+                    .path("/products")
+                    .queryParam("keyword", keyword)
+                    .queryParam("page", page)
+                    .build()
+            }
+            .retrieve()
+            .awaitBody<List<ProductDTO>>()
+    }
+}
+```
+
+**에러 처리**:
+```kotlin
+suspend fun getUser(userId: Long): UserDTO? {
+    return try {
+        webClient.get()
+            .uri("/users/$userId")
+            .retrieve()
+            .onStatus(HttpStatusCode::is4xxClientError) { response ->
+                response.bodyToMono(String::class.java).map { body ->
+                    NotFoundException("사용자 없음: $userId (응답: $body)")
+                }
+            }
+            .onStatus(HttpStatusCode::is5xxServerError) { _ ->
+                Mono.error(ExternalApiException("외부 서버 오류"))
+            }
+            .awaitBody<UserDTO>()
+    } catch (e: WebClientResponseException.NotFound) {
+        null  // 404는 null 반환
+    }
+}
+```
+
+---
+
+## 심화 7: @Scheduled - 스케줄러
+
+### 20. 주기적으로 실행되는 작업
+
+**활성화**:
+```kotlin
+@SpringBootApplication
+@EnableScheduling   // 필수!
+class MyApplication
+```
+
+**기본 사용법**:
+```kotlin
+@Component
+class OrderScheduler(
+    private val orderService: OrderService,
+    private val notificationService: NotificationService
+) {
+    private val logger = KotlinLogging.logger {}
+
+    // 매일 자정에 실행 (cron 표현식)
+    @Scheduled(cron = "0 0 0 * * *")
+    fun dailyOrderSummary() {
+        logger.info { "일일 주문 집계 시작" }
+        orderService.generateDailySummary()
+    }
+
+    // 5분마다 실행
+    @Scheduled(fixedDelay = 5 * 60 * 1000)  // ms 단위
+    fun checkPendingOrders() {
+        logger.info { "미처리 주문 확인" }
+        orderService.processAllPendingOrders()
+    }
+
+    // 앱 시작 10초 후, 이후 1시간마다 실행
+    @Scheduled(initialDelay = 10_000, fixedRate = 60 * 60 * 1000)
+    fun syncExternalData() {
+        logger.info { "외부 데이터 동기화" }
+        // 외부 API와 데이터 동기화
+    }
+}
+```
+
+**cron 표현식 읽는 법**:
+```
+"0 0 0 * * *"
+ │ │ │ │ │ └── 요일 (0=일, 1=월, ..., 6=토, * = 매일)
+ │ │ │ │ └──── 월 (* = 매월)
+ │ │ │ └────── 일 (* = 매일)
+ │ │ └──────── 시 (0 = 자정)
+ │ └────────── 분 (0 = 0분)
+ └──────────── 초 (0 = 0초)
+
+자주 쓰는 패턴:
+"0 0 0 * * *"    → 매일 자정
+"0 0 9 * * 1-5"  → 평일 오전 9시
+"0 */30 * * * *" → 30분마다
+"0 0 */2 * * *"  → 2시간마다
+```
+
+**suspend 함수와 함께 사용할 때**:
+```kotlin
+@Component
+class CoroutineScheduler {
+
+    @Scheduled(fixedDelay = 60_000)
+    fun scheduledTask() {
+        // @Scheduled는 일반 함수여야 함
+        // 내부에서 runBlocking으로 코루틴 실행
+        runBlocking {
+            suspendTask()
+        }
+    }
+
+    private suspend fun suspendTask() {
+        // suspend 로직
+        delay(1000)
+        println("완료")
+    }
+}
+```
+
+---
+
 ## 실습 프로젝트: 주문 관리 미니 시스템
 
 주문(Order) 기능을 단순화한 버전을 만들어봅시다.
@@ -932,13 +1504,24 @@ src/main/kotlin/com/example/order/
 - [ ] Blocking vs Non-blocking을 설명할 수 있다
 - [ ] suspend 함수를 작성하고 호출할 수 있다
 - [ ] Kotlin Coroutine 기본 개념 이해
+- [ ] Flow를 사용해서 데이터 스트림 처리
 - [ ] Reactive TODO 앱으로 변환 완료
 
 **Week 3: 프로젝트 패턴**
 - [ ] Entity-DTO-Domain 3계층 구조 이해
 - [ ] Interface-Implementation 패턴 이해
-- [ ] 예외 처리 방식 이해
+- [ ] 예외 처리 방식 이해 (@RestControllerAdvice)
+- [ ] Request Validation 구현
 - [ ] 주문 관리 미니 시스템 구현 완료
+
+**Week 4: 심화 기능**
+- [ ] @Transactional 이해 및 적용
+- [ ] @Configuration / @Bean 설정
+- [ ] @ConfigurationProperties로 환경 설정 관리
+- [ ] Spring Profiles (dev / prod 분리)
+- [ ] 로깅 (KotlinLogging) 적용
+- [ ] WebClient로 외부 API 호출
+- [ ] @Scheduled 스케줄러 구현
 
 ---
 
