@@ -1478,6 +1478,23 @@ Kotlin 기초를 마스터했다면:
 
 ---
 
+## 실습 코드
+
+이 문서의 개념을 직접 실행하며 학습할 수 있습니다:
+
+| 주제 | 실습 코드 |
+|------|----------|
+| 변수, 타입, Null Safety | [`src/study/01_basics/variable/`](../../src/study/01_basics/variable/) |
+| 연산자 | [`src/study/01_basics/operator/`](../../src/study/01_basics/operator/) |
+| 조건문 (if, when) | [`src/study/01_basics/condition/`](../../src/study/01_basics/condition/) |
+| 반복문 (for, while) | [`src/study/01_basics/loop/`](../../src/study/01_basics/loop/) |
+| 배열 | [`src/study/01_basics/array/`](../../src/study/01_basics/array/) |
+| 함수, 람다, 고차함수 | [`src/study/02_function/`](../../src/study/02_function/) |
+| 컬렉션 (List, Set, Map) | [`src/study/04_collection/basics/`](../../src/study/04_collection/basics/) |
+| 컬렉션 함수 | [`src/study/04_collection/functions/`](../../src/study/04_collection/functions/) |
+
+---
+
 ## 참고 자료
 
 - [Kotlin 공식 문서](https://kotlinlang.org/docs/home.html)

@@ -629,6 +629,18 @@ val safeResult = javaResult ?: "기본값"
 
 ---
 
+## 실습 코드
+
+이 문서의 개념을 직접 실행하며 학습할 수 있습니다:
+
+| 주제 | 실습 코드 |
+|------|----------|
+| 상속, 다형성 | [`src/study/05_oop/Inheritance.kt`](../../src/study/05_oop/Inheritance.kt) |
+| 인터페이스, 위임 | [`src/study/05_oop/Interface.kt`](../../src/study/05_oop/Interface.kt) |
+| 예외처리 패턴 | [`src/study/06_advanced/ExceptionHandling.kt`](../../src/study/06_advanced/ExceptionHandling.kt) |
+
+---
+
 ## 참고 자료
 
 - [Kotlin 공식 코딩 컨벤션](https://kotlinlang.org/docs/coding-conventions.html)

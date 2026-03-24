@@ -1778,6 +1778,21 @@ Spring Boot 기초를 마스터했다면:
 
 ---
 
+## 실습 코드
+
+이 문서의 개념을 직접 실행하며 학습할 수 있습니다:
+
+| 주제 | 실습 코드 |
+|------|----------|
+| Spring Boot 기초 (DI, Controller) | [`src/study/07_spring/`](../../src/study/07_spring/) |
+| 도서 관리 시스템 (전체 프로젝트) | [`spring-kotlin-guide/practice/book/`](../practice/book/) |
+
+### 실습 순서
+1. `src/study/07_spring/` - Spring Boot 기초 개념 익히기
+2. `practice/book/` - 실제 프로젝트 분석 및 확장
+
+---
+
 ## 참고 자료
 
 - [Spring Boot 공식 문서](https://spring.io/projects/spring-boot)

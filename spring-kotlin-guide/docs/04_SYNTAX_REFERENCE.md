@@ -1822,6 +1822,19 @@ class UserService(
 
 ---
 
+## 실습 코드
+
+이 문서의 개념을 직접 실행하며 학습할 수 있습니다:
+
+| 주제 | 실습 코드 |
+|------|----------|
+| 클래스, data class, enum, object | [`src/study/03_class/`](../../src/study/03_class/) |
+| 제네릭 | [`src/study/06_advanced/Generics.kt`](../../src/study/06_advanced/Generics.kt) |
+| sealed class | [`src/study/06_advanced/SealedClass.kt`](../../src/study/06_advanced/SealedClass.kt) |
+| 예외처리 | [`src/study/06_advanced/ExceptionHandling.kt`](../../src/study/06_advanced/ExceptionHandling.kt) |
+
+---
+
 ## 마무리
 
 이 문서는 Kotlin 문법을 정리한 것입니다. 각 문법을 완벽하게 이해하려고 하기보다는, 실제 코드를 작성하면서 점진적으로 익혀나가는 것이 좋습니다.

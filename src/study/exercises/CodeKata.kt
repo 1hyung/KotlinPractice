@@ -1,3 +1,11 @@
+package study.exercises
+
+/**
+ * Code Kata - 프로그래머스 연습 문제
+ *
+ * 기본적인 산술 연산, 문자열 처리, 컬렉션 함수 활용 예제입니다.
+ */
+
 /*// 두 정수의 차 단일 표현식으로 작성
 class Solution {
     fun solution(num1: Int, num2: Int): Int = num1 - num2

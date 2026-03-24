@@ -1,4 +1,11 @@
-// Calculator 클래스 정의
+package study.exercises
+
+/**
+ * Calculator 실습
+ *
+ * 클래스, 메서드, 사용자 입력을 활용한 계산기 예제입니다.
+ */
+
 class Calculator {
     // 덧셈 메소드
     fun add(a: Double, b: Double): Double {
